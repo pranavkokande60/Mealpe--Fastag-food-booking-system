@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Kitchen Display System (KDS) – Smart Canteen Staff{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 px-lg-5">
+
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <div class="badge bg-danger text-white px-3 py-1 rounded-pill mb-1 fw-bold">
+        <i class="fa-solid fa-fire-burner me-1"></i> Live Kitchen Display System (KDS)
+      </div>
+      <h3 class="fw-bold mb-0">Active Kitchen Orders Queue</h3>
+      <p class="text-muted small mb-0">Real-time incoming campus student orders • Instant status transitions</p>
+    </div>
+    
+    <!-- Scoreboard Badges -->
+    <div class="d-flex gap-2">
+      <span class="badge bg-primary rounded-pill px-3 py-2 fs-6">
+        Placed: <b>{{ placed_count }}</b>
+      </span>
+      <span class="badge bg-danger rounded-pill px-3 py-2 fs-6">
+        Cooking: <b>{{ prep_count }}</b>
+      </span>
+      <span class="badge bg-success rounded-pill px-3 py-2 fs-6">
+        Ready: <b>{{ ready_count }}</b>
+      </span>
+    </div>
+  </div>
+
+  <!-- Orders Columns Grid -->
+  {% if orders %}
+    <div class="row g-3">
+      {% for o in orders %}
+        <div class="col-xl-4 col-md-6">
+          <div class="kds-card {{ o.order_status|lower }}">
+            
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="fw-bold fs-5 text-dark">#{{ o.order_number }}</span>
+              <span class="badge {% if o.order_status == 'READY' %}bg-success{% elif o.order_status == 'PREPARING' %}bg-danger{% elif o.order_status == 'ACCEPTED' %}bg-warning text-dark{% else %}bg-primary{% endif %} rounded-pill px-3 py-1 text-uppercase">
+                {{ o.order_status }}
+              </span>
+            </div>
+
+            <div class="text-muted small mb-2">
+              <i class="fa-regular fa-user me-1"></i> <b>{{ o.student_name }}</b> ({{ o.student_phone or 'No phone' }})
+              <br>
+              <i class="fa-regular fa-clock me-1"></i> Ordered at {{ o.created_at|date_format('%I:%M %p') }}
+            </div>
+
+            <!-- Items Deck -->
+            <div class="bg-light p-3 rounded-3 mb-3 border">
+              <div class="small fw-bold text-muted mb-1">Dishes to Prepare:</div>
+              <ul class="list-unstyled mb-0">
+                {% for item_str in o.items_list %}
+                  <li class="fw-bold text-dark py-1 border-bottom border-light">
+                    <i class="fa-solid fa-utensils text-danger me-2"></i> {{ item_str }}
+                  </li>
+                {% endfor %}
+              </ul>
+              {% if o.special_instructions %}
+                <div class="alert alert-warning py-1 px-2 mb-0 mt-2 small">
+                  <b>Chef Note:</b> {{ o.special_instructions }}
+                </div>
+              {% endif %}
+            </div>
+
+            <!-- Action Buttons for Status Transitions -->
+            <div class="d-flex flex-wrap gap-2">
+              {% if o.order_status == 'PLACED' %}
+                <form action="{{ url_for('staff.update_status', order_id=o.id, new_status='ACCEPTED') }}" method="POST" class="w-100">
+                  <button type="submit" class="btn btn-warning w-100 fw-bold rounded-pill btn-sm py-2">
+                    <i class="fa-solid fa-check me-1"></i> Accept Order
+                  </button>
+                </form>
+              {% elif o.order_status == 'ACCEPTED' %}
+                <form action="{{ url_for('staff.update_status', order_id=o.id, new_status='PREPARING') }}" method="POST" class="w-100">
+                  <button type="submit" class="btn btn-danger w-100 fw-bold rounded-pill btn-sm py-2">
+                    <i class="fa-solid fa-fire-burner me-1"></i> Start Cooking
+                  </button>
+                </form>
+              {% elif o.order_status == 'PREPARING' %}
+                <form action="{{ url_for('staff.update_status', order_id=o.id, new_status='READY') }}" method="POST" class="w-100">
+                  <button type="submit" class="btn btn-success w-100 fw-bold rounded-pill btn-sm py-2">
+                    <i class="fa-solid fa-bell-concierge me-1"></i> Mark as Ready for Pickup
+                  </button>
+                </form>
+              {% elif o.order_status == 'READY' %}
+                <form action="{{ url_for('staff.update_status', order_id=o.id, new_status='COMPLETED') }}" method="POST" class="w-100">
+                  <button type="submit" class="btn btn-dark w-100 fw-bold rounded-pill btn-sm py-2">
+                    <i class="fa-solid fa-box-check me-1"></i> Handover & Complete
+                  </button>
+                </form>
+              {% endif %}
+            </div>
+
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="text-center py-5 bg-white rounded-4 shadow-sm">
+      <i class="fa-solid fa-circle-check fa-3x text-success mb-3"></i>
+      <h4 class="fw-bold">All Orders Cleared!</h4>
+      <p class="text-muted small">The kitchen is all caught up. New student orders will automatically pop up here.</p>
+    </div>
+  {% endif %}
+
+</div>
+
+<script src="{{ url_for('static', filename='js/kitchen_board.js') }}"></script>
+<script>
+// Auto-refresh KDS board every 6 seconds to show incoming orders
+setTimeout(() => { location.reload(); }, 7000);
+</script>
+{% endblock %}

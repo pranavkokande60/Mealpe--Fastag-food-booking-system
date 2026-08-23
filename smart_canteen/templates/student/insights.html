@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}My Spending & Dining Insights – Smart Canteen{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h3 class="fw-bold mb-0"><i class="fa-solid fa-chart-pie text-danger me-2"></i> My Dining Insights</h3>
+      <p class="text-muted small mb-0">Personalized analytics on your campus eating habits, monthly spending, and favorites</p>
+    </div>
+  </div>
+
+  <!-- Metric KPI Cards -->
+  <div class="row g-3 mb-4">
+    
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+        <div class="d-flex align-items-center gap-3">
+          <div class="rounded-circle bg-danger-subtle text-danger d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; font-size: 1.3rem;">
+            <i class="fa-solid fa-indian-rupee-sign"></i>
+          </div>
+          <div>
+            <div class="text-muted small">Total Money Spent</div>
+            <h4 class="fw-bold mb-0">₹{{ "%.2f"|format(stats.total_spent) }}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+        <div class="d-flex align-items-center gap-3">
+          <div class="rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; font-size: 1.3rem;">
+            <i class="fa-solid fa-receipt"></i>
+          </div>
+          <div>
+            <div class="text-muted small">Orders Placed</div>
+            <h4 class="fw-bold mb-0">{{ stats.total_orders }}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+        <div class="d-flex align-items-center gap-3">
+          <div class="rounded-circle bg-success-subtle text-success d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; font-size: 1.3rem;">
+            <i class="fa-solid fa-calculator"></i>
+          </div>
+          <div>
+            <div class="text-muted small">Average Order Value</div>
+            <h4 class="fw-bold mb-0">₹{{ "%.2f"|format(stats.avg_order_value) }}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="row g-4">
+    <!-- Left: Favorite Food Card & Category Breakdown -->
+    <div class="col-lg-6">
+      
+      <!-- Favorite Dish Banner -->
+      {% if fav_food %}
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+          <h5 class="fw-bold mb-3"><i class="fa-solid fa-crown text-warning me-2"></i> Your All-Time #1 Favorite Dish</h5>
+          <div class="d-flex align-items-center gap-3">
+            <img src="{{ fav_food.image_url }}" class="rounded-3" width="90" height="90" style="object-fit: cover;">
+            <div>
+              <h5 class="fw-bold mb-1">{{ fav_food.name }}</h5>
+              <p class="text-muted small mb-0">Ordered <b>{{ fav_food.freq }} times</b> this semester</p>
+              <a href="{{ url_for('student.menu') }}" class="btn btn-brand btn-sm rounded-pill mt-2">Order Again</a>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- Category Spending Table -->
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+        <h5 class="fw-bold mb-3">Favorite Food Categories</h5>
+        <div class="list-group list-group-flush">
+          {% for c in cat_breakdown %}
+            <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+              <span class="fw-semibold">{{ c.category }}</span>
+              <span class="badge bg-light text-dark border">{{ c.count }} orders (₹{{ "%.2f"|format(c.spent) }})</span>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right: Monthly Spending Chart -->
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+        <h5 class="fw-bold mb-3">Monthly Spending Trend</h5>
+        <div style="height: 280px; position: relative;">
+          <canvas id="student-monthly-chart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const ctx = document.getElementById('student-monthly-chart');
+  if (ctx) {
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: [{% for m in monthly_spending %}'{{ m.month_label }}',{% endfor %}],
+        datasets: [{
+          label: 'Spent (₹)',
+          data: [{% for m in monthly_spending %}{{ m.total }},{% endfor %}],
+          backgroundColor: '#E23744',
+          borderRadius: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, ticks: { callback: v => `₹${v}` } }
+        }
+      }
+    });
+  }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Executive Dashboard – Smart Canteen{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 px-lg-5">
+
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h3 class="fw-bold mb-0"><i class="fa-solid fa-gauge-high text-danger me-2"></i> Executive Admin Dashboard</h3>
+      <p class="text-muted small mb-0">Real-time overview of canteen sales, kitchen orders, inventory alerts & AI predictions</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('admin.ai_control_center') }}" class="btn btn-warning rounded-pill px-3 fw-bold">
+        <i class="fa-solid fa-wand-magic-sparkles me-1"></i> AI Control Center
+      </a>
+      <a href="{{ url_for('admin.reports') }}" class="btn btn-dark rounded-pill px-3">
+        <i class="fa-solid fa-file-pdf me-1"></i> Reports
+      </a>
+    </div>
+  </div>
+
+  <!-- Metric Stat Cards Row -->
+  <div class="row g-3 mb-4">
+    
+    <div class="col-xl-3 col-md-6">
+      <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted small">Today's Revenue</div>
+            <h3 class="fw-bold text-danger mb-0">₹{{ "%.2f"|format(today_revenue) }}</h3>
+            <small class="text-success"><i class="fa-solid fa-arrow-up me-1"></i> {{ today_orders }} Orders today</small>
+          </div>
+          <div class="rounded-circle bg-danger-subtle text-danger p-3">
+            <i class="fa-solid fa-indian-rupee-sign fa-lg"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+      <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted small">Active Kitchen Orders</div>
+            <h3 class="fw-bold text-dark mb-0">{{ active_orders_cnt }}</h3>
+            <small class="text-muted">In kitchen preparation</small>
+          </div>
+          <div class="rounded-circle bg-warning-subtle text-warning p-3">
+            <i class="fa-solid fa-fire-burner fa-lg"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+      <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted small">Tomorrow's AI Demand</div>
+            <h3 class="fw-bold text-primary mb-0">~{{ expected_orders }} Units</h3>
+            <small class="text-primary fw-semibold">Est. Rev: ₹{{ "%.0f"|format(expected_revenue) }}</small>
+          </div>
+          <div class="rounded-circle bg-primary-subtle text-primary p-3">
+            <i class="fa-solid fa-brain fa-lg"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+      <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted small">Low Stock Items</div>
+            <h3 class="fw-bold {% if low_stock_cnt > 0 %}text-danger{% else %}text-success{% endif %} mb-0">{{ low_stock_cnt }}</h3>
+            <small class="text-muted">Requires reordering</small>
+          </div>
+          <div class="rounded-circle {% if low_stock_cnt > 0 %}bg-danger-subtle text-danger{% else %}bg-success-subtle text-success{% endif %} p-3">
+            <i class="fa-solid fa-triangle-exclamation fa-lg"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Charts Row -->
+  <div class="row g-4 mb-4">
+    <!-- Revenue Line Chart -->
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0">Daily Revenue Trend (Last 7 Days)</h5>
+          <span class="badge bg-light text-dark border">Auto-Updated</span>
+        </div>
+        <div style="height: 280px; position: relative;">
+          <canvas id="admin-revenue-chart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Category Sales Doughnut Chart -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+        <h5 class="fw-bold mb-3">Category Revenue Share</h5>
+        <div style="height: 260px; position: relative;">
+          <canvas id="admin-category-chart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tables Row: Top Foods & Recent Orders -->
+  <div class="row g-4">
+    <!-- Top 5 Dishes -->
+    <div class="col-lg-5">
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+        <h5 class="fw-bold mb-3">Top 5 Campus Favorites</h5>
+        <div class="list-group list-group-flush">
+          {% for f in top_foods %}
+            <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+              <div class="d-flex align-items-center gap-2">
+                <img src="{{ f.image_url }}" class="rounded-2" width="40" height="40" style="object-fit: cover;">
+                <div>
+                  <h6 class="fw-bold mb-0 small">{{ f.name }}</h6>
+                  <span class="text-muted small">₹{{ "%.2f"|format(f.price) }} • ⭐ {{ f.rating }}</span>
+                </div>
+              </div>
+              <span class="badge bg-danger-subtle text-danger rounded-pill px-3 py-2 fw-bold">
+                {{ f.total_orders }} orders
+              </span>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Recent Orders Feed -->
+    <div class="col-lg-7">
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0">Recent Orders Feed</h5>
+          <a href="{{ url_for('admin.orders_manage') }}" class="btn btn-outline-danger btn-sm rounded-pill px-3">View All Orders</a>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle small mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Order #</th>
+                <th>Student</th>
+                <th>Items</th>
+                <th>Amount</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for o in recent_orders %}
+                <tr>
+                  <td class="fw-bold">{{ o.order_number }}</td>
+                  <td>{{ o.student_name }}</td>
+                  <td class="text-truncate" style="max-width: 180px;">{{ o.items_summary }}</td>
+                  <td class="fw-bold">₹{{ "%.2f"|format(o.final_amount) }}</td>
+                  <td>
+                    <span class="badge {% if o.order_status == 'COMPLETED' %}bg-success{% elif o.order_status == 'CANCELLED' %}bg-secondary{% elif o.order_status == 'READY' %}bg-info text-dark{% else %}bg-warning text-dark{% endif %} rounded-pill">
+                      {{ o.order_status }}
+                    </span>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // 1. Line Chart
+  const revCtx = document.getElementById('admin-revenue-chart');
+  if (revCtx) {
+    new Chart(revCtx, {
+      type: 'line',
+      data: {
+        labels: [{% for r in rev_chart %}'{{ r.order_date }}',{% endfor %}],
+        datasets: [{
+          label: 'Revenue (₹)',
+          data: [{% for r in rev_chart %}{{ r.total_rev }},{% endfor %}],
+          borderColor: '#E23744',
+          backgroundColor: 'rgba(226, 55, 68, 0.08)',
+          fill: true,
+          tension: 0.3,
+          borderWidth: 3,
+          pointBackgroundColor: '#E23744',
+          pointRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { callback: v => `₹${v}` } } }
+      }
+    });
+  }
+
+  // 2. Doughnut Chart
+  const catCtx = document.getElementById('admin-category-chart');
+  if (catCtx) {
+    new Chart(catCtx, {
+      type: 'doughnut',
+      data: {
+        labels: [{% for c in cat_sales %}'{{ c.category }}',{% endfor %}],
+        datasets: [{
+          data: [{% for c in cat_sales %}{{ c.total_amount }},{% endfor %}],
+          backgroundColor: ['#E23744', '#F59E0B', '#10B981', '#3B82F6', '#8B5CF6', '#EC4899']
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom' } }
+      }
+    });
+  }
+});
+</script>
+{% endblock %}

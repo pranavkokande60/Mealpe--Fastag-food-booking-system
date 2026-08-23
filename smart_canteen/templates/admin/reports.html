@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Export Executive Reports – Smart Canteen Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 px-lg-5">
+
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h3 class="fw-bold mb-0"><i class="fa-solid fa-file-export text-danger me-2"></i> Executive Report Generation</h3>
+      <p class="text-muted small mb-0">Generate and download official PDF tax reports, inventory valuation summaries & CSV audit logs</p>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Sales & Revenue Report -->
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div class="rounded-circle bg-danger-subtle text-danger p-3">
+            <i class="fa-solid fa-chart-line fa-lg"></i>
+          </div>
+          <div>
+            <h5 class="fw-bold mb-0">Sales & Revenue Report</h5>
+            <small class="text-muted">Itemized transactions, payment channels, and daily sales totals</small>
+          </div>
+        </div>
+
+        <form action="{{ url_for('admin.reports') }}" method="POST">
+          <input type="hidden" name="report_type" value="sales">
+          <div class="d-flex gap-2 mt-4">
+            <button type="submit" name="export_format" value="pdf" class="btn btn-brand rounded-pill px-4 btn-sm w-100">
+              <i class="fa-solid fa-file-pdf me-1"></i> Download PDF
+            </button>
+            <button type="submit" name="export_format" value="csv" class="btn btn-outline-dark rounded-pill px-4 btn-sm w-100">
+              <i class="fa-solid fa-file-csv me-1"></i> Export CSV
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Inventory & Stock Valuation Report -->
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div class="rounded-circle bg-primary-subtle text-primary p-3">
+            <i class="fa-solid fa-boxes-stacked fa-lg"></i>
+          </div>
+          <div>
+            <h5 class="fw-bold mb-0">Smart Inventory & Stock Report</h5>
+            <small class="text-muted">Material SKUs, current stock balances, reorder points & cost valuation</small>
+          </div>
+        </div>
+
+        <form action="{{ url_for('admin.reports') }}" method="POST">
+          <input type="hidden" name="report_type" value="inventory">
+          <div class="d-flex gap-2 mt-4">
+            <button type="submit" name="export_format" value="pdf" class="btn btn-brand rounded-pill px-4 btn-sm w-100">
+              <i class="fa-solid fa-file-pdf me-1"></i> Download PDF
+            </button>
+            <button type="submit" name="export_format" value="csv" class="btn btn-outline-dark rounded-pill px-4 btn-sm w-100">
+              <i class="fa-solid fa-file-csv me-1"></i> Export CSV
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

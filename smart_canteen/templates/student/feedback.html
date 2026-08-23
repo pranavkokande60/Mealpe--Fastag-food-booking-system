@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Share Food Feedback – Smart Canteen{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+      
+      <!-- Feedback Form Card -->
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+        <div class="text-center mb-4">
+          <div class="brand-icon mx-auto mb-2" style="width: 44px; height: 44px; font-size: 1.2rem;">
+            <i class="fa-solid fa-star"></i>
+          </div>
+          <h4 class="fw-bold mb-1">Rate Your Canteen Meal</h4>
+          <p class="text-muted small">Our AI automatically analyzes your reviews to improve kitchen prep, portion sizes & speed</p>
+        </div>
+
+        <form action="{{ url_for('student.feedback') }}" method="POST">
+          
+          <!-- Optional Order Link -->
+          {% if recent_orders %}
+            <div class="mb-3">
+              <label class="form-label fw-semibold small text-muted">Select Order (Optional)</label>
+              <select name="order_id" class="form-select bg-light">
+                <option value="">General Canteen Feedback</option>
+                {% for o in recent_orders %}
+                  <option value="{{ o.id }}">Order #{{ o.order_number }} ({{ o.created_at }})</option>
+                {% endfor %}
+              </select>
+            </div>
+          {% endif %}
+
+          <!-- Rating Stars -->
+          <div class="mb-3 text-center">
+            <label class="form-label fw-semibold small text-muted d-block">Overall Rating</label>
+            <div class="btn-group" role="group">
+              {% for star in range(1, 6) %}
+                <input type="radio" class="btn-check" name="rating" id="star{{ star }}" value="{{ star }}" {% if star == 5 %}checked{% endif %}>
+                <label class="btn btn-outline-warning px-3 py-2 fw-bold" for="star{{ star }}">{{ star }} ⭐</label>
+              {% endfor %}
+            </div>
+          </div>
+
+          <!-- Comment Box -->
+          <div class="mb-4">
+            <label class="form-label fw-semibold small text-muted">Your Honest Review & Comments</label>
+            <textarea name="comment" class="form-control bg-light" rows="4" placeholder="Tell us about the taste, temperature, waiting time, freshness, or hygiene..." required></textarea>
+            <small class="text-muted">Example: 'The Masala Dosa was super crispy but the sambhar was a bit cold.'</small>
+          </div>
+
+          <button type="submit" class="btn btn-brand w-100 py-3 rounded-pill fw-bold">
+            <i class="fa-solid fa-paper-plane me-2"></i> Submit AI Feedback
+          </button>
+        </form>
+
+      </div>
+
+      <!-- Previous Feedback History -->
+      {% if my_feedbacks %}
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+          <h5 class="fw-bold mb-3">Your Previous Feedback</h5>
+          <div class="list-group list-group-flush">
+            {% for fb in my_feedbacks %}
+              <div class="list-group-item px-0 py-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <span class="text-warning fw-bold">{{ fb.rating }} ⭐</span>
+                  <span class="badge {% if fb.sentiment == 'POSITIVE' %}bg-success{% elif fb.sentiment == 'NEGATIVE' %}bg-danger{% else %}bg-secondary{% endif %} rounded-pill">
+                    {{ fb.sentiment }} • {{ fb.aspect }}
+                  </span>
+                </div>
+                <p class="text-dark small mb-1">{{ fb.comment }}</p>
+                <small class="text-muted">{{ fb.created_at }}</small>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}

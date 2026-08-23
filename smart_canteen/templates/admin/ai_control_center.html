@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}AI Control Center – Smart Canteen{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 px-lg-5">
+
+  <!-- Header with Date Picker -->
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div>
+      <div class="badge bg-warning text-dark px-3 py-1 rounded-pill mb-1 fw-bold">
+        <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Machine Learning Intelligence Hub
+      </div>
+      <h3 class="fw-bold mb-0">AI Strategic Decision Control Center</h3>
+      <p class="text-muted small mb-0">Automated multi-factor demand forecasting, crowd simulation, and food waste mitigation</p>
+    </div>
+
+    <!-- Target Date Form -->
+    <form action="{{ url_for('admin.ai_control_center') }}" method="GET" class="d-flex align-items-center gap-2">
+      <label class="form-label mb-0 fw-semibold small text-muted text-nowrap">Forecast Date:</label>
+      <input type="date" name="date" class="form-control form-control-sm bg-white" value="{{ target_date }}" onchange="this.form.submit()">
+      <button type="submit" class="btn btn-brand btn-sm rounded-pill px-3">Forecast</button>
+    </form>
+  </div>
+
+  <!-- AI Executive Summary Banner -->
+  <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 text-white" style="background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);">
+    <div class="row align-items-center gy-3">
+      <div class="col-lg-8">
+        <div class="d-flex align-items-center gap-2 text-warning small fw-bold mb-2">
+          <i class="fa-solid fa-sparkles"></i> AI Strategic Insights for {{ target_date }}
+        </div>
+        <h4 class="fw-bold mb-2">Projected Demand: ~{{ total_pred_units }} Total Portions • Est. Revenue: ₹{{ "%.2f"|format(total_pred_revenue) }}</h4>
+        <p class="text-white-50 small mb-0">
+          {% if top_demanded_item %}
+            • Top Demanded Item: <b>{{ top_demanded_item.food_name }}</b> (~{{ top_demanded_item.predicted_demand }} servings needed).<br>
+          {% endif %}
+          • {{ waste_analysis.summary_advice }}
+        </p>
+      </div>
+      <div class="col-lg-4 text-lg-end">
+        <span class="badge bg-{{ waste_analysis.badge_class }} px-3 py-2 rounded-pill mb-2">
+          Waste Risk: {{ waste_analysis.overall_risk }}
+        </span>
+        <div class="small text-white-50">Projected Waste Prevention: <b>{{ waste_analysis.waste_reduction_rate }}</b></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <!-- Left: AI Demand Forecast Table with Plain-English Explainability -->
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <h5 class="fw-bold mb-0">Item Demand Forecasting (RandomForest Model)</h5>
+            <small class="text-muted">Includes plain-English explainability reasons for each prediction</small>
+          </div>
+          <span class="badge bg-primary-subtle text-primary border border-primary px-3 py-2 rounded-pill">
+            {{ demand_predictions|length }} Menu Items Evaluated
+          </span>
+        </div>
+
+        <div class="table-responsive" style="max-height: 520px; overflow-y: auto;">
+          <table class="table table-hover align-middle small mb-0">
+            <thead class="table-light sticky-top">
+              <tr>
+                <th>Food Item</th>
+                <th>Price</th>
+                <th>Current Stock</th>
+                <th>Predicted Demand</th>
+                <th>Est. Revenue</th>
+                <th style="min-width: 200px;">AI Reasoning (Explainability)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in demand_predictions %}
+                <tr>
+                  <td class="fw-bold">{{ p.food_name }}</td>
+                  <td>₹{{ "%.2f"|format(p.price) }}</td>
+                  <td>
+                    <span class="badge {% if p.current_stock < p.predicted_demand %}bg-danger-subtle text-danger{% else %}bg-light text-dark border{% endif %}">
+                      {{ p.current_stock }}
+                    </span>
+                  </td>
+                  <td class="fw-bold text-primary">{{ p.predicted_demand }} units</td>
+                  <td class="fw-bold">₹{{ "%.2f"|format(p.expected_revenue) }}</td>
+                  <td class="text-muted small">
+                    <i class="fa-solid fa-lightbulb text-warning me-1"></i> {{ p.explanation }}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Hourly Crowd Density Schedule -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0">Hourly Crowd Density</h5>
+          <span class="badge bg-light text-dark border">30-Min Intervals</span>
+        </div>
+
+        <div class="list-group list-group-flush" style="max-height: 520px; overflow-y: auto;">
+          {% for slot in crowd_schedule %}
+            <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
+              <div>
+                <div class="fw-bold small">{{ slot.time_slot }}</div>
+                <div class="text-muted" style="font-size: 0.75rem;">Wait: {{ slot.estimated_wait }}</div>
+              </div>
+              <div class="text-end">
+                <span class="badge bg-{{ slot.badge_class }} rounded-pill px-3 py-1">
+                  {{ slot.crowd_level }} ({{ slot.occupancy_pct }}%)
+                </span>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Food Waste Risk & Mitigation Advice -->
+  <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h5 class="fw-bold mb-0"><i class="fa-solid fa-recycle text-success me-2"></i> Food Spoilage & Waste Mitigation Engine</h5>
+        <small class="text-muted">Proactive preparation adjustments to save canteen expenses</small>
+      </div>
+      <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill fw-bold">
+        Est. Prevented Waste: ₹{{ "%.2f"|format(waste_analysis.estimated_savings) }}
+      </span>
+    </div>
+
+    {% if waste_analysis.alerts %}
+      <div class="row g-3">
+        {% for alert in waste_analysis.alerts %}
+          <div class="col-md-6">
+            <div class="p-3 border rounded-3 bg-light">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                  <span class="badge {% if alert.risk_level == 'HIGH' %}bg-danger{% else %}bg-warning text-dark{% endif %} rounded-pill mb-1">
+                    {{ alert.risk_level }} RISK
+                  </span>
+                  <h6 class="fw-bold mb-0">{{ alert.name }}</h6>
+                </div>
+                <span class="text-danger fw-bold small">Risk: ₹{{ "%.2f"|format(alert.potential_loss) }}</span>
+              </div>
+              <p class="text-muted small mb-0">
+                <b>AI Action:</b> {{ alert.action_recommendation }}
+              </p>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="alert alert-success border-0 rounded-3 mb-0">
+        <i class="fa-solid fa-check-circle me-2"></i> Zero high-risk food wastage detected for current stock rotation.
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Seat & Table Management – Smart Canteen Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 px-lg-5">
+
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h3 class="fw-bold mb-0"><i class="fa-solid fa-chair text-danger me-2"></i> Table & Seat Layout Management</h3>
+      <p class="text-muted small mb-0">Overview of active campus canteen tables, capacities, and active bookings</p>
+    </div>
+    <span class="badge bg-primary text-white rounded-pill px-3 py-2">{{ tables|length }} Tables Installed</span>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <!-- Left: Tables Directory -->
+    <div class="col-lg-5">
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+        <h5 class="fw-bold mb-3">Canteen Table Layout</h5>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0 small">
+            <thead class="table-light">
+              <tr>
+                <th>Table #</th>
+                <th>Section</th>
+                <th>Capacity</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for t in tables %}
+                <tr>
+                  <td class="fw-bold text-danger">{{ t.table_number }}</td>
+                  <td>{{ t.section }}</td>
+                  <td>{{ t.capacity }} Seats</td>
+                  <td>
+                    <span class="badge bg-success rounded-pill">Active</span>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Recent & Active Table Bookings -->
+    <div class="col-lg-7">
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+        <h5 class="fw-bold mb-3">Student Seat Reservations</h5>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0 small">
+            <thead class="table-light">
+              <tr>
+                <th>Booking Code</th>
+                <th>Student</th>
+                <th>Table</th>
+                <th>Date & Slot</th>
+                <th>Guests</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for b in bookings %}
+                <tr>
+                  <td class="fw-bold">{{ b.booking_code }}</td>
+                  <td>
+                    <div class="fw-semibold">{{ b.student_name }}</div>
+                    <div class="text-muted" style="font-size: 0.75rem;">{{ b.student_phone or '' }}</div>
+                  </td>
+                  <td>Table {{ b.table_number }} ({{ b.section }})</td>
+                  <td>{{ b.booking_date }}<br><small class="text-muted">{{ b.time_slot }}</small></td>
+                  <td>{{ b.guests_count }}</td>
+                  <td>
+                    <span class="badge {% if b.status == 'CONFIRMED' %}bg-success{% else %}bg-secondary{% endif %} rounded-pill">
+                      {{ b.status }}
+                    </span>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

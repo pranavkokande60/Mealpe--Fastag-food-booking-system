@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}Smart Canteen – Order Ahead, Skip the Queue{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+  <div class="container">
+    <div class="row align-items-center gy-5">
+      <div class="col-lg-6">
+        <div class="hero-badge animate__animated animate__fadeInDown">
+          <i class="fa-solid fa-sparkles"></i> AI-Powered Campus Dining Platform
+        </div>
+        <h1 class="display-4 fw-extrabold font-display mb-3" style="line-height: 1.15; color: #111827;">
+          Smart Canteen.<br>
+          <span class="text-primary-brand">Smarter Campus.</span>
+        </h1>
+        <p class="lead text-muted mb-4">
+          Order ahead, skip crowded lunch queues, reserve dining tables, and get personalized AI food recommendations crafted for student schedules.
+        </p>
+
+        <!-- Search Bar -->
+        <form action="{{ url_for('student.menu') }}" method="GET" class="hero-search-box mb-4">
+          <i class="fa-solid fa-magnifying-glass text-muted ms-2"></i>
+          <input type="text" name="q" class="hero-search-input" placeholder="Search Vada Pav, Biryani, Cold Coffee, Dosa...">
+          <button type="submit" class="btn btn-brand px-4 rounded-pill">Search</button>
+        </form>
+
+        <!-- Highlights Row -->
+        <div class="d-flex flex-wrap gap-4 text-muted small">
+          <div class="d-flex align-items-center gap-2">
+            <i class="fa-solid fa-bolt text-warning fa-lg"></i>
+            <span><b>Instant</b> Pickup</span>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <i class="fa-solid fa-chair text-success fa-lg"></i>
+            <span><b>Smart</b> Seat Booking</span>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <i class="fa-solid fa-robot text-primary fa-lg"></i>
+            <span><b>AI</b> Recommendations</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hero Visual Card -->
+      <div class="col-lg-6">
+        <div class="position-relative">
+          <div class="card border-0 shadow-lg rounded-4 overflow-hidden p-3 bg-white">
+            <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop&q=80" class="rounded-3 w-100" style="height: 340px; object-fit: cover;" alt="Canteen Dining">
+            
+            <!-- Floating Live Status Badge -->
+            <div class="position-absolute top-0 end-0 m-4 bg-white rounded-pill px-3 py-2 shadow-sm d-flex align-items-center gap-2 border">
+              <span class="spinner-grow spinner-grow-sm text-{{ crowd_now.badge_class }}" role="status"></span>
+              <span class="small fw-bold">Live Crowd: <span class="text-{{ crowd_now.badge_class }}">{{ crowd_now.crowd_level }}</span></span>
+            </div>
+
+            <!-- Floating Card ETA -->
+            <div class="position-absolute bottom-0 start-0 m-4 bg-dark text-white rounded-3 p-3 shadow-lg" style="max-width: 260px; backdrop-filter: blur(10px); background: rgba(17, 24, 39, 0.9);">
+              <div class="d-flex align-items-center gap-2 text-warning small fw-bold mb-1">
+                <i class="fa-solid fa-clock-fast"></i> Average Kitchen Prep
+              </div>
+              <h5 class="fw-bold mb-0">~8 to 12 mins</h5>
+              <small class="text-white-50">Save up to 25 mins daily</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Category Highlights Carousel -->
+<section class="py-5 bg-white border-bottom">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h4 class="fw-bold mb-1">Explore Campus Categories</h4>
+        <p class="text-muted small mb-0">Fresh meals & snacks curated for your classes</p>
+      </div>
+      <a href="{{ url_for('student.menu') }}" class="btn btn-outline-danger btn-sm rounded-pill px-3">View Full Menu</a>
+    </div>
+
+    <div class="row g-3">
+      {% for cat in categories %}
+        <div class="col-lg-2 col-md-4 col-6">
+          <a href="{{ url_for('student.menu', category=cat.id) }}" class="card text-decoration-none border-0 shadow-sm rounded-4 text-center p-3 h-100 hover-lift" style="background: #F8FAFC; transition: all 0.25s ease;">
+            <div class="rounded-circle mx-auto mb-2 overflow-hidden shadow-sm" style="width: 80px; height: 80px;">
+              <img src="{{ cat.image_url }}" class="w-100 h-100" style="object-fit: cover;" alt="{{ cat.name }}">
+            </div>
+            <h6 class="fw-bold text-dark mb-1 small">{{ cat.name }}</h6>
+          </a>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Popular Food Showcase -->
+<section class="py-5">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-end mb-4">
+      <div>
+        <div class="badge bg-danger-subtle text-danger px-3 py-1 rounded-pill mb-2 fw-bold">Campus Favorites</div>
+        <h3 class="fw-bold mb-0">Top Trending Dishes Today</h3>
+      </div>
+      <a href="{{ url_for('student.menu') }}" class="text-danger fw-bold text-decoration-none small">See all dishes <i class="fa-solid fa-arrow-right ms-1"></i></a>
+    </div>
+
+    <div class="row g-4">
+      {% for food in popular_dishes %}
+        <div class="col-lg-4 col-md-6">
+          <div class="food-card">
+            <div class="food-image-container">
+              <img src="{{ food.image_url }}" class="food-image" alt="{{ food.name }}">
+              <div class="food-badge-ai">
+                <i class="fa-solid fa-fire"></i> Trending
+              </div>
+              <div class="food-badge-rating">
+                <i class="fa-solid fa-star fa-xs"></i> {{ food.rating }}
+              </div>
+            </div>
+            <div class="food-card-body">
+              <div class="d-flex align-items-center mb-1">
+                <span class="{{ 'indicator-veg' if food.is_veg else 'indicator-nonveg' }}"></span>
+                <h6 class="food-title mb-0 text-truncate">{{ food.name }}</h6>
+              </div>
+              <p class="food-desc">{{ food.description }}</p>
+              <div class="food-meta">
+                <span><i class="fa-regular fa-clock me-1"></i> {{ food.prep_time_minutes }} mins</span>
+                <span><i class="fa-solid fa-fire-flame-curved me-1"></i> {{ food.calories }} kcal</span>
+              </div>
+              <div class="food-footer">
+                <span class="food-price">₹{{ "%.2f"|format(food.price) }}</span>
+                <button type="button" class="btn btn-add-cart btn-add-to-cart"
+                  data-id="{{ food.id }}"
+                  data-name="{{ food.name }}"
+                  data-price="{{ food.price }}"
+                  data-image="{{ food.image_url }}"
+                  data-veg="{{ food.is_veg }}">
+                  ADD +
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Smart Seat Booking Promotion Banner -->
+<section class="py-5 bg-white border-top border-bottom">
+  <div class="container">
+    <div class="row align-items-center gy-4">
+      <div class="col-lg-6">
+        <div class="badge bg-success-subtle text-success px-3 py-1 rounded-pill mb-2 fw-bold">Zero Table Hunting</div>
+        <h2 class="fw-bold mb-3">Reserve Your Dining Table in Advance</h2>
+        <p class="text-muted mb-4">
+          Never wander around looking for an empty table during peak lunch breaks. Pick your preferred time slot, select Window Bay or AC Corner on our interactive 2D map, and dine stress-free with your peer group.
+        </p>
+        <div class="d-flex gap-3">
+          <a href="{{ url_for('student.seat_booking') }}" class="btn btn-brand rounded-pill px-4">
+            <i class="fa-solid fa-chair me-1"></i> Book a Table Now
+          </a>
+          <a href="{{ url_for('student.menu') }}" class="btn btn-outline-dark rounded-pill px-4">Explore Menu</a>
+        </div>
+      </div>
+      <div class="col-lg-6 text-center">
+        <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=700&auto=format&fit=crop&q=80" class="rounded-4 shadow-lg w-100" style="max-height: 320px; object-fit: cover;" alt="Canteen Seating Area">
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

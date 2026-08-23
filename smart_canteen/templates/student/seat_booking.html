@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}Smart 2D Seat Booking – Smart Canteen{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h3 class="fw-bold mb-0"><i class="fa-solid fa-chair text-danger me-2"></i> Smart Table & Seat Reservation</h3>
+      <p class="text-muted small mb-0">Select your dining date, time slot, and pick your favorite table section</p>
+    </div>
+    <div class="d-flex align-items-center gap-3">
+      <span class="badge bg-success-subtle text-success border border-success px-3 py-2 rounded-pill">
+        <i class="fa-solid fa-circle-check me-1"></i> {{ layout.available_seats }} Seats Available
+      </span>
+    </div>
+  </div>
+
+  <!-- Date & Slot Filter Row -->
+  <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white">
+    <form action="{{ url_for('student.seat_booking') }}" method="GET" class="row g-3 align-items-end">
+      
+      <div class="col-md-4">
+        <label class="form-label fw-semibold small text-muted">Reservation Date</label>
+        <input type="date" name="date" class="form-control bg-light" value="{{ selected_date }}" min="{{ today }}" onchange="this.form.submit()">
+      </div>
+
+      <div class="col-md-5">
+        <label class="form-label fw-semibold small text-muted">Select Dining Time Slot</label>
+        <select name="slot" class="form-select bg-light" onchange="this.form.submit()">
+          {% for slot in layout.time_slots %}
+            <option value="{{ slot }}" {% if selected_slot == slot %}selected{% endif %}>{{ slot }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-md-3">
+        <button type="submit" class="btn btn-brand w-100 rounded-pill">Update Floor Map</button>
+      </div>
+
+    </form>
+  </div>
+
+  <!-- Legend -->
+  <div class="d-flex flex-wrap gap-4 mb-4 small fw-semibold">
+    <div class="d-flex align-items-center gap-2"><span class="d-inline-block rounded-circle" style="width: 14px; height: 14px; background: #10B981;"></span> Available Table</div>
+    <div class="d-flex align-items-center gap-2"><span class="d-inline-block rounded-circle" style="width: 14px; height: 14px; background: #CBD5E1;"></span> Booked / Occupied</div>
+    <div class="d-flex align-items-center gap-2"><span class="d-inline-block rounded-circle" style="width: 14px; height: 14px; background: #E23744;"></span> Selected Table</div>
+    <div class="d-flex align-items-center gap-2"><span class="d-inline-block rounded-circle" style="width: 14px; height: 14px; background: #F59E0B;"></span> Your Reservation</div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Left: 2D Floor Plan Grid -->
+    <div class="col-lg-8">
+      
+      {% for section_name, tables in layout.sections.items() %}
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold mb-0"><i class="fa-solid fa-layer-group text-danger me-2"></i> {{ section_name }}</h5>
+            <span class="badge bg-light text-dark border">{{ tables|length }} Tables</span>
+          </div>
+
+          <div class="row g-3">
+            {% for t in tables %}
+              <div class="col-md-4 col-6">
+                <div class="table-card {{ t.status }}"
+                     data-table-id="{{ t.id }}"
+                     data-table-number="{{ t.table_number }}"
+                     data-table-capacity="{{ t.capacity }}">
+                  <div class="table-icon">
+                    <i class="fa-solid fa-utensils"></i>
+                  </div>
+                  <h6 class="fw-bold mb-0">Table {{ t.table_number }}</h6>
+                  <div class="small fw-semibold mt-1">
+                    {{ t.capacity }} Seats • 
+                    {% if t.status == 'available' %}Available
+                    {% elif t.status == 'my_booking' %}Your Seat
+                    {% else %}Booked
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endfor %}
+
+    </div>
+
+    <!-- Right: Confirmation Sidebar -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white sticky-top" style="top: 90px;">
+        <h5 class="fw-bold mb-3">Confirm Reservation</h5>
+        
+        <form action="{{ url_for('student.seat_booking') }}" method="POST">
+          <input type="hidden" name="booking_date" value="{{ selected_date }}">
+          <input type="hidden" name="time_slot" value="{{ selected_slot }}">
+          <input type="hidden" name="table_id" id="selected-table-id" required>
+
+          <div class="p-3 bg-light rounded-3 mb-3">
+            <div class="small text-muted mb-1">Selected Table:</div>
+            <h5 class="fw-bold text-danger mb-0" id="selected-table-label">Click a green table on map</h5>
+          </div>
+
+          <div class="mb-3">
+            <div class="small text-muted mb-1">Date & Time Slot:</div>
+            <div class="fw-bold text-dark">{{ selected_date }} | {{ selected_slot }}</div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold small text-muted">Number of Guests / Peers</label>
+            <select name="guests_count" class="form-select bg-light">
+              <option value="1" selected>1 Person (Solo)</option>
+              <option value="2">2 People (Pair)</option>
+              <option value="4">3-4 People (Group)</option>
+              <option value="6">5-6 People (Study Group)</option>
+            </select>
+          </div>
+
+          <button type="submit" id="confirm-booking-btn" class="btn btn-brand w-100 py-3 rounded-pill fw-bold" disabled>
+            <i class="fa-solid fa-check me-1"></i> Book Table
+          </button>
+        </form>
+
+        <!-- Active Bookings Summary -->
+        {% if my_bookings %}
+          <div class="mt-4 pt-3 border-top">
+            <h6 class="fw-bold mb-2">Your Upcoming Reservations</h6>
+            {% for mb in my_bookings %}
+              <div class="p-2 bg-light rounded-3 mb-2 small d-flex justify-content-between align-items-center">
+                <div>
+                  <div class="fw-bold">Table {{ mb.table_number }} ({{ mb.section }})</div>
+                  <div class="text-muted">{{ mb.booking_date }} at {{ mb.time_slot }}</div>
+                </div>
+                <form action="{{ url_for('student.cancel_seat', booking_id=mb.id) }}" method="POST">
+                  <button type="submit" class="btn btn-link text-danger p-0 small text-decoration-none">Cancel</button>
+                </form>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="{{ url_for('static', filename='js/seat_booking.js') }}"></script>
+{% endblock %}

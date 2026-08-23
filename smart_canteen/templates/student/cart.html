@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}My Cart – Smart Canteen{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <h3 class="fw-bold mb-4"><i class="fa-solid fa-basket-shopping text-danger me-2"></i> Your Order Cart</h3>
+
+  <div class="row g-4">
+    <!-- Left: Cart Items List -->
+    <div class="col-lg-7">
+      <div id="cart-items-container">
+        <!-- Rendered dynamically by main.js from localStorage -->
+      </div>
+    </div>
+
+    <!-- Right: Bill Summary & Checkout -->
+    <div class="col-lg-5" id="cart-summary-section">
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white sticky-top" style="top: 90px;">
+        
+        <h5 class="fw-bold mb-3">Order Summary</h5>
+
+        <!-- Smart Estimated Prep Time Box -->
+        <div class="alert alert-warning border-0 rounded-3 py-2 px-3 small mb-3" id="cart-estimated-prep">
+          ⚡ Calculating optimal kitchen queue preparation time...
+        </div>
+
+        <!-- Coupon Apply Box -->
+        <div class="mb-3">
+          <label class="form-label fw-semibold small text-muted">Apply Student Coupon</label>
+          <div class="input-group">
+            <input type="text" id="coupon-code-input" class="form-control text-uppercase" placeholder="e.g. WELCOME50">
+            <button class="btn btn-dark" type="button" onclick="applyCoupon()">Apply</button>
+          </div>
+          <div id="coupon-feedback-msg" class="small mt-1"></div>
+        </div>
+
+        <!-- Available Coupons List -->
+        {% if coupons %}
+          <div class="mb-3">
+            <div class="small fw-bold text-muted mb-1">Available Promo Deals:</div>
+            <div class="d-flex flex-wrap gap-1">
+              {% for c in coupons %}
+                <span class="badge bg-light text-danger border p-2 cursor-pointer" onclick="document.getElementById('coupon-code-input').value='{{ c.code }}'; applyCoupon();">
+                  <i class="fa-solid fa-tag me-1"></i> {{ c.code }} (Save {% if c.discount_percent > 0 %}{{ c.discount_percent|int }}%{% else %}₹{{ c.discount_amount|int }}{% endif %})
+                </span>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+
+        <!-- Cost Breakdown -->
+        <div class="d-flex justify-content-between py-2 text-muted small border-top">
+          <span>Item Subtotal</span>
+          <span id="cart-subtotal" class="fw-semibold text-dark">₹0.00</span>
+        </div>
+        <div class="d-flex justify-content-between py-2 text-muted small" id="discount-row" style="display: none;">
+          <span class="text-success"><i class="fa-solid fa-tag me-1"></i> Coupon Discount</span>
+          <span id="cart-discount" class="fw-bold text-success">- ₹0.00</span>
+        </div>
+        <div class="d-flex justify-content-between py-2 text-muted small">
+          <span>Campus Tax & GST (5%)</span>
+          <span id="cart-tax" class="fw-semibold text-dark">₹0.00</span>
+        </div>
+        
+        <div class="d-flex justify-content-between py-3 border-top border-2 mt-2">
+          <span class="fw-bold h5 mb-0">Grand Total</span>
+          <span id="cart-total" class="fw-bold h5 text-danger mb-0">₹0.00</span>
+        </div>
+
+        <!-- Checkout Action Button -->
+        <a href="{{ url_for('student.checkout') }}" class="btn btn-brand w-100 py-3 rounded-pill fw-bold mt-2">
+          Proceed to Checkout <i class="fa-solid fa-arrow-right ms-1"></i>
+        </a>
+
+        <button type="button" class="btn btn-link text-muted btn-sm text-decoration-none mt-2 w-100" onclick="window.cartManager.clearCart();">
+          <i class="fa-regular fa-trash-can me-1"></i> Clear Cart
+        </button>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function applyCoupon() {
+  const code = document.getElementById('coupon-code-input').value.trim();
+  const subtotal = window.cartManager.getSubtotal();
+  const msgEl = document.getElementById('coupon-feedback-msg');
+
+  if (!code) {
+    msgEl.className = 'small text-danger mt-1';
+    msgEl.textContent = 'Please enter a coupon code.';
+    return;
+  }
+
+  fetch('/api/cart/validate-coupon', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code: code, subtotal: subtotal })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.valid) {
+      msgEl.className = 'small text-success fw-bold mt-1';
+      msgEl.textContent = data.message;
+      window.appliedDiscount = data.discount_amount;
+      window.appliedCouponCode = data.code;
+      sessionStorage.setItem('applied_coupon', data.code);
+      
+      const discRow = document.getElementById('discount-row');
+      const discVal = document.getElementById('cart-discount');
+      if (discRow && discVal) {
+        discRow.style.display = 'flex';
+        discVal.textContent = `- ₹${data.discount_amount.toFixed(2)}`;
+      }
+      window.cartManager.renderCartUI();
+    } else {
+      msgEl.className = 'small text-danger mt-1';
+      msgEl.textContent = data.message;
+      window.appliedDiscount = 0;
+      window.cartManager.renderCartUI();
+    }
+  });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Daily Kitchen Demand Forecast – Smart Canteen Staff{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 px-lg-5">
+
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <div class="badge bg-warning text-dark px-3 py-1 rounded-pill mb-1 fw-bold">
+        <i class="fa-solid fa-brain me-1"></i> AI Kitchen Prep Planner
+      </div>
+      <h3 class="fw-bold mb-0">Daily Food Demand Forecast for Today ({{ today }})</h3>
+      <p class="text-muted small mb-0">Prepare morning and lunch batch sizes based on AI predicted consumption</p>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Dish Name</th>
+            <th>Recommended Prep Quantity</th>
+            <th>Current Stock Ready</th>
+            <th>Production Status</th>
+            <th>AI Insights</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in predictions %}
+            <tr>
+              <td class="fw-bold fs-6">{{ p.food_name }}</td>
+              <td>
+                <span class="badge bg-primary fs-6 px-3 py-2 rounded-pill">
+                  {{ p.predicted_demand }} Portions
+                </span>
+              </td>
+              <td>
+                <span class="badge {% if p.current_stock < p.predicted_demand %}bg-danger{% else %}bg-success{% endif %} rounded-pill px-3 py-2">
+                  {{ p.current_stock }} Ready
+                </span>
+              </td>
+              <td>
+                {% if p.current_stock < p.predicted_demand %}
+                  <span class="text-danger fw-bold small"><i class="fa-solid fa-fire me-1"></i> Need +{{ p.predicted_demand - p.current_stock }} more</span>
+                {% else %}
+                  <span class="text-success fw-bold small"><i class="fa-solid fa-check me-1"></i> Adequate stock</span>
+                {% endif %}
+              </td>
+              <td class="text-muted small">{{ p.explanation }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
