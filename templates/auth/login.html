@@ -19,22 +19,12 @@
             <p class="text-muted small">Sign in to your Smart Canteen account</p>
           </div>
 
-          <!-- Quick Demo Switcher Tabs -->
-          <div class="bg-light p-2 rounded-3 mb-4 text-center">
-            <div class="small fw-bold text-muted mb-2"><i class="fa-solid fa-bolt text-warning me-1"></i> Quick 1-Click Demo Login</div>
-            <div class="btn-group w-100" role="group">
-              <button type="button" class="btn btn-sm btn-outline-danger" onclick="fillCredentials('student@smartcanteen.com', 'Student@123')">Student</button>
-              <button type="button" class="btn btn-sm btn-outline-dark" onclick="fillCredentials('staff@smartcanteen.com', 'Staff@123')">Staff</button>
-              <button type="button" class="btn btn-sm btn-outline-primary" onclick="fillCredentials('admin@smartcanteen.com', 'Admin@123')">Admin</button>
-            </div>
-          </div>
-
           <form action="{{ url_for('auth.login') }}" method="POST">
             <div class="mb-3">
               <label class="form-label fw-semibold small text-muted">Email or Student ID</label>
               <div class="input-group">
                 <span class="input-group-text bg-light border-end-0"><i class="fa-regular fa-envelope text-muted"></i></span>
-                <input type="text" id="login-identifier" name="identifier" class="form-control bg-light border-start-0" placeholder="student@smartcanteen.com" required>
+                <input type="text" id="login-identifier" name="identifier" class="form-control bg-light border-start-0" placeholder="Enter your email or roll number" required autocomplete="username">
               </div>
             </div>
 
@@ -44,7 +34,7 @@
               </div>
               <div class="input-group">
                 <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-lock text-muted"></i></span>
-                <input type="password" id="login-password" name="password" class="form-control bg-light border-start-0" placeholder="••••••••" required>
+                <input type="password" id="login-password" name="password" class="form-control bg-light border-start-0" placeholder="Enter your password" required autocomplete="current-password">
               </div>
             </div>
 
@@ -62,12 +52,4 @@
     </div>
   </div>
 </div>
-
-<script>
-function fillCredentials(id, pw) {
-  document.getElementById('login-identifier').value = id;
-  document.getElementById('login-password').value = pw;
-  window.cartManager?.showToast(`Filled credentials for ${id}`, 'info');
-}
-</script>
 {% endblock %}
