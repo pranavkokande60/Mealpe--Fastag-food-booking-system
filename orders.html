@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Orders Oversight – Smart Canteen Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 px-lg-5">
+
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h3 class="fw-bold mb-0"><i class="fa-solid fa-receipt text-danger me-2"></i> Comprehensive Order Management</h3>
+      <p class="text-muted small mb-0">Track all campus incoming orders, transition preparation stages & monitor payment states</p>
+    </div>
+    <span class="badge bg-dark text-white rounded-pill px-3 py-2">{{ orders|length }} Orders Listed</span>
+  </div>
+
+  <!-- Filter & Search Bar -->
+  <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white">
+    <form action="{{ url_for('admin.orders_manage') }}" method="GET" class="row g-2 align-items-center">
+      
+      <div class="col-md-5">
+        <div class="input-group">
+          <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+          <input type="text" name="q" value="{{ search_q }}" class="form-control bg-light border-start-0" placeholder="Search by Order # or Student Name...">
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <select name="status" class="form-select bg-light" onchange="this.form.submit()">
+          <option value="ALL" {% if status_filter == 'ALL' %}selected{% endif %}>All Order Statuses</option>
+          <option value="PLACED" {% if status_filter == 'PLACED' %}selected{% endif %}>Placed (Pending Kitchen)</option>
+          <option value="ACCEPTED" {% if status_filter == 'ACCEPTED' %}selected{% endif %}>Accepted</option>
+          <option value="PREPARING" {% if status_filter == 'PREPARING' %}selected{% endif %}>Preparing</option>
+          <option value="READY" {% if status_filter == 'READY' %}selected{% endif %}>Ready for Pickup</option>
+          <option value="COMPLETED" {% if status_filter == 'COMPLETED' %}selected{% endif %}>Completed</option>
+          <option value="CANCELLED" {% if status_filter == 'CANCELLED' %}selected{% endif %}>Cancelled</option>
+        </select>
+      </div>
+
+      <div class="col-md-3 d-flex gap-2">
+        <button type="submit" class="btn btn-brand w-100 rounded-pill">Filter</button>
+        {% if search_q or status_filter != 'ALL' %}
+          <a href="{{ url_for('admin.orders_manage') }}" class="btn btn-light border rounded-pill"><i class="fa-solid fa-rotate-left"></i></a>
+        {% endif %}
+      </div>
+
+    </form>
+  </div>
+
+  <!-- Orders Table -->
+  <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0 small">
+        <thead class="table-light">
+          <tr>
+            <th>Order #</th>
+            <th>Student Details</th>
+            <th>Items Ordered</th>
+            <th>Total Amount</th>
+            <th>Payment</th>
+            <th>Order Date</th>
+            <th>Status</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for o in orders %}
+            <tr>
+              <td class="fw-bold text-danger">{{ o.order_number }}</td>
+              <td>
+                <div class="fw-bold">{{ o.student_name }}</div>
+                <div class="text-muted" style="font-size: 0.75rem;">{{ o.student_phone or 'No phone' }}</div>
+              </td>
+              <td style="max-width: 220px;">
+                <div class="text-truncate">{{ o.items_summary }}</div>
+                {% if o.special_instructions %}
+                  <small class="text-muted fst-italic">Note: {{ o.special_instructions }}</small>
+                {% endif %}
+              </td>
+              <td class="fw-bold">₹{{ "%.2f"|format(o.final_amount) }}</td>
+              <td>
+                <span class="badge {% if o.payment_status == 'PAID' %}bg-success{% else %}bg-warning text-dark{% endif %} rounded-pill">
+                  {{ o.payment_method|upper }} ({{ o.payment_status }})
+                </span>
+              </td>
+              <td>{{ o.created_at|date_format }}</td>
+              <td>
+                <span class="badge {% if o.order_status == 'COMPLETED' %}bg-success{% elif o.order_status == 'READY' %}bg-info text-dark{% elif o.order_status == 'CANCELLED' %}bg-secondary{% elif o.order_status == 'PREPARING' %}bg-danger{% else %}bg-warning text-dark{% endif %} rounded-pill px-3 py-1">
+                  {{ o.order_status }}
+                </span>
+              </td>
+              <td class="text-end">
+                <a href="{{ url_for('student.download_receipt', order_id=o.id) }}" class="btn btn-light btn-sm border rounded-pill px-3 me-1" title="PDF Invoice">
+                  <i class="fa-solid fa-file-pdf text-danger"></i>
+                </a>
+                <a href="{{ url_for('student.order_track', order_id=o.id) }}" class="btn btn-outline-dark btn-sm rounded-pill px-3">
+                  Live View
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
