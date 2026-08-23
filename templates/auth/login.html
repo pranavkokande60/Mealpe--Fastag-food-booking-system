@@ -12,20 +12,33 @@
         <div class="p-4 p-md-5">
           
           <div class="text-center mb-4">
-            <div class="brand-icon mx-auto mb-3" style="width: 48px; height: 48px; font-size: 1.4rem;">
-              <i class="fa-solid fa-utensils"></i>
+            <div class="brand-icon mx-auto mb-3" style="width: 48px; height: 48px; font-size: 1.4rem;" id="portal-icon">
+              <i class="fa-solid fa-graduation-cap text-danger"></i>
             </div>
-            <h4 class="fw-bold mb-1">Welcome</h4>
-            <p class="text-muted small">Sign in to your account</p>
+            <h4 class="fw-bold mb-1" id="portal-title">Student Portal</h4>
+            <p class="text-muted small" id="portal-subtitle">Sign in to order food, track orders & book seats</p>
+          </div>
+
+          <!-- Role Selection Tabs (NO Auto-Fill) -->
+          <div class="d-flex justify-content-center bg-light p-1 rounded-pill mb-4 border">
+            <button type="button" class="btn btn-sm rounded-pill px-3 py-2 fw-semibold role-tab active" id="tab-student" onclick="selectRole('student')">
+              <i class="fa-solid fa-graduation-cap me-1"></i> Student
+            </button>
+            <button type="button" class="btn btn-sm rounded-pill px-3 py-2 fw-semibold text-muted role-tab" id="tab-staff" onclick="selectRole('staff')">
+              <i class="fa-solid fa-kitchen-set me-1"></i> Staff
+            </button>
+            <button type="button" class="btn btn-sm rounded-pill px-3 py-2 fw-semibold text-muted role-tab" id="tab-admin" onclick="selectRole('admin')">
+              <i class="fa-solid fa-shield-halved me-1"></i> Admin
+            </button>
           </div>
 
           <form action="{{ url_for('auth.login') }}" method="POST" autocomplete="off">
             
             <div class="mb-3">
-              <label class="form-label fw-semibold small text-muted">Email or Student ID</label>
+              <label class="form-label fw-semibold small text-muted" id="identifier-label">Email or Student ID</label>
               <div class="input-group">
                 <span class="input-group-text bg-light border-end-0"><i class="fa-regular fa-envelope text-muted"></i></span>
-                <input type="text" id="login-identifier" name="identifier" class="form-control bg-light border-start-0" placeholder="Enter your email or ID" required autocomplete="off" value="">
+                <input type="text" id="login-identifier" name="identifier" class="form-control bg-light border-start-0" placeholder="Enter your student email or roll ID" required autocomplete="off" value="">
               </div>
             </div>
 
@@ -39,12 +52,12 @@
               </div>
             </div>
 
-            <button type="submit" class="btn btn-brand w-100 py-2 rounded-pill fw-bold">Sign In</button>
+            <button type="submit" class="btn btn-brand w-100 py-2 rounded-pill fw-bold" id="signin-button">Sign In as Student</button>
           </form>
 
-          <div class="text-center mt-4 pt-3 border-top">
-            <span class="text-muted small">Don't have an account? </span>
-            <a href="{{ url_for('auth.register') }}" class="text-danger fw-bold text-decoration-none small">Register Here</a>
+          <div class="text-center mt-4 pt-3 border-top" id="register-footer">
+            <span class="text-muted small">New to campus? </span>
+            <a href="{{ url_for('auth.register') }}" class="text-danger fw-bold text-decoration-none small">Create Student Account</a>
           </div>
 
         </div>
@@ -53,4 +66,64 @@
     </div>
   </div>
 </div>
+
+<style>
+.role-tab {
+  transition: all 0.2s ease-in-out;
+  border: none;
+  flex: 1;
+}
+.role-tab.active {
+  background-color: #E23744 !important;
+  color: #fff !important;
+  box-shadow: 0 2px 8px rgba(226, 55, 68, 0.3);
+}
+</style>
+
+<script>
+function selectRole(role) {
+  document.querySelectorAll('.role-tab').forEach(t => {
+    t.classList.remove('active');
+    t.classList.add('text-muted');
+  });
+
+  const activeTab = document.getElementById(`tab-${role}`);
+  activeTab.classList.add('active');
+  activeTab.classList.remove('text-muted');
+
+  const title = document.getElementById('portal-title');
+  const subtitle = document.getElementById('portal-subtitle');
+  const icon = document.getElementById('portal-icon');
+  const label = document.getElementById('identifier-label');
+  const input = document.getElementById('login-identifier');
+  const btn = document.getElementById('signin-button');
+  const regFooter = document.getElementById('register-footer');
+
+  if (role === 'student') {
+    title.textContent = 'Student Portal';
+    subtitle.textContent = 'Sign in to order food, track orders & book seats';
+    icon.innerHTML = '<i class="fa-solid fa-graduation-cap text-danger"></i>';
+    label.textContent = 'Email or Student ID';
+    input.placeholder = 'Enter your student email or roll ID';
+    btn.textContent = 'Sign In as Student';
+    regFooter.style.display = 'block';
+  } else if (role === 'staff') {
+    title.textContent = 'Kitchen Staff Portal';
+    subtitle.textContent = 'Sign in to manage Live Kitchen Display (KDS)';
+    icon.innerHTML = '<i class="fa-solid fa-kitchen-set text-danger"></i>';
+    label.textContent = 'Staff Email or ID';
+    input.placeholder = 'Enter staff email (e.g. staff@smartcanteen.com)';
+    btn.textContent = 'Sign In to Kitchen KDS';
+    regFooter.style.display = 'none';
+  } else if (role === 'admin') {
+    title.textContent = 'Administrator Portal';
+    subtitle.textContent = 'Sign in to access AI Control Center & analytics';
+    icon.innerHTML = '<i class="fa-solid fa-shield-halved text-danger"></i>';
+    label.textContent = 'Administrator Email';
+    input.placeholder = 'Enter admin email (e.g. admin@smartcanteen.com)';
+    btn.textContent = 'Sign In as Admin';
+    regFooter.style.display = 'none';
+  }
+}
+</script>
 {% endblock %}
