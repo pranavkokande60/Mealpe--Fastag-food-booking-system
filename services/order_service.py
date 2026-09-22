@@ -199,6 +199,55 @@ class OrderService:
 
         return True
 
+
+    def cancel_order(self, order_id: int, user_id: int, role: str = 'student', reason: str = None) -> dict:
+        order = query_db("SELECT * FROM orders WHERE id = %s", (order_id,), one=True)
+        if not order:
+            raise ValueError("Order not found.")
+        if role not in ['admin', 'staff'] and int(order['student_id']) != int(user_id):
+            raise PermissionError("You are not authorized to cancel this order.")
+        if order['order_status'] in ['PREPARING', 'READY', 'COMPLETED']:
+            raise ValueError(f"Cannot cancel order. The kitchen has already started cooking (Status: {order['order_status']}).")
+        if order['order_status'] == 'CANCELLED':
+            raise ValueError("This order has already been cancelled.")
+
+        order_items = query_db("SELECT food_id, quantity FROM order_items WHERE order_id = %s", (order_id,)) or []
+        for item in order_items:
+            fid = item['food_id']
+            qty = item['quantity']
+            execute_db("UPDATE food_items SET stock_quantity = stock_quantity + %s, total_orders = MAX(0, total_orders - %s) WHERE id = %s", (qty, qty, fid))
+
+        refund_amount = 0.0
+        final_amount = float(order['final_amount'])
+        is_paid = order['payment_status'] == 'PAID'
+
+        if is_paid:
+            refund_amount = final_amount
+            execute_db("UPDATE users SET wallet_balance = wallet_balance + %s WHERE id = %s", (refund_amount, order['student_id']))
+            execute_db("UPDATE orders SET order_status = 'CANCELLED', payment_status = 'REFUNDED', updated_at = NOW() WHERE id = %s", (order_id,))
+            execute_db("UPDATE payments SET payment_status = 'REFUNDED' WHERE order_id = %s", (order_id,))
+        else:
+            execute_db("UPDATE orders SET order_status = 'CANCELLED', payment_status = 'CANCELLED', updated_at = NOW() WHERE id = %s", (order_id,))
+            execute_db("UPDATE payments SET payment_status = 'CANCELLED' WHERE order_id = %s", (order_id,))
+
+        updated_user = query_db("SELECT wallet_balance FROM users WHERE id = %s", (order['student_id'],), one=True)
+        new_wallet_balance = float(updated_user['wallet_balance']) if updated_user else 0.0
+
+        reason_text = f" Reason: {reason}." if reason else ""
+        refund_text = f" ₹{refund_amount:.2f} has been refunded to your dining wallet." if refund_amount > 0 else ""
+        notif_msg = f"Your order #{order['order_number']} has been cancelled.{reason_text}{refund_text}"
+
+        execute_db("INSERT INTO notifications (user_id, title, message, type, link, created_at) VALUES (%s, %s, %s, 'order', %s, NOW())", (order['student_id'], f"Order Cancelled #{order['order_number']}", notif_msg, f"/student/order-track/{order_id}"))
+
+        return {
+            "success": True,
+            "order_id": order_id,
+            "order_number": order['order_number'],
+            "refund_amount": refund_amount,
+            "new_wallet_balance": new_wallet_balance,
+            "message": notif_msg
+        }
+
 def random_str(length=4):
     import random, string
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))

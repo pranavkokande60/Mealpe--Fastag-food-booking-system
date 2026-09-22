@@ -203,6 +203,31 @@ def order_track(order_id):
         current_step_idx=current_step_idx
     )
 
+
+@student_bp.route('/order/<int:order_id>/cancel', methods=['POST'])
+@login_required
+def cancel_order(order_id):
+    reason = request.form.get('reason', '').strip()
+    try:
+        res = order_service.cancel_order(
+            order_id=order_id,
+            user_id=session['user_id'],
+            role=session.get('user_role', 'student'),
+            reason=reason if reason else None
+        )
+        if res.get('refund_amount', 0) > 0:
+            session['wallet_balance'] = res['new_wallet_balance']
+            flash(f"Order #{res['order_number']} has been cancelled. ₹{res['refund_amount']:.2f} refunded to your dining wallet!", 'success')
+        else:
+            flash(f"Order #{res['order_number']} has been cancelled successfully.", 'info')
+    except Exception as e:
+        flash(str(e), 'danger')
+
+    redirect_to = request.form.get('redirect_to')
+    if redirect_to == 'history':
+        return redirect(url_for('student.order_history'))
+    return redirect(url_for('student.order_track', order_id=order_id))
+
 @student_bp.route('/receipt/<int:order_id>')
 @login_required
 def download_receipt(order_id):

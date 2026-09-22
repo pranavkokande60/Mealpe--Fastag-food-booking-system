@@ -11,70 +11,92 @@
       <!-- Order Header Card -->
       <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white text-center">
         
-        <div class="badge bg-success-subtle text-success px-3 py-1 rounded-pill mb-2 fw-bold d-inline-block">
-          <i class="fa-solid fa-circle-check me-1"></i> Order #{{ order.order_number }} Confirmed
-        </div>
-        
-        <h3 class="fw-bold mb-1">
-          {% if order.order_status == 'PLACED' %}Order Received by Kitchen
-          {% elif order.order_status == 'ACCEPTED' %}Chef Accepted Your Order
-          {% elif order.order_status == 'PREPARING' %}Cooking in Progress 🔥
-          {% elif order.order_status == 'READY' %}🎉 Ready for Pickup at Counter!
-          {% elif order.order_status == 'COMPLETED' %}Order Completed! Enjoy Your Food
-          {% else %}{{ order.order_status }}
+        {% if order.order_status == 'CANCELLED' %}
+          <div class="badge bg-danger-subtle text-danger px-3 py-1 rounded-pill mb-2 fw-bold d-inline-block">
+            <i class="fa-solid fa-ban me-1"></i> Order #{{ order.order_number }} Cancelled
+          </div>
+          <h3 class="fw-bold mb-1 text-danger">Order Cancelled</h3>
+          {% if order.payment_status == 'REFUNDED' %}
+            <div class="alert alert-success d-inline-block py-2 px-4 rounded-pill small my-2">
+              <i class="fa-solid fa-wallet me-1"></i> <b>Refund Processed:</b> ₹{{ "%.2f"|format(order.final_amount) }} credited back to your dining wallet.
+            </div>
+          {% else %}
+            <p class="text-muted small mb-3">This order was cancelled.</p>
           {% endif %}
-        </h3>
-        
-        <p class="text-muted small mb-3">Estimated ready around: <b>{{ order.pickup_time or 'As soon as possible' }}</b> (~{{ order.estimated_prep_time }} mins total)</p>
-
-        <!-- Step-by-Step Progress Timeline -->
-        <div class="timeline-container my-4">
+        {% else %}
+          <div class="badge bg-success-subtle text-success px-3 py-1 rounded-pill mb-2 fw-bold d-inline-block">
+            <i class="fa-solid fa-circle-check me-1"></i> Order #{{ order.order_number }} Confirmed
+          </div>
           
-          <div class="timeline-step {% if current_step_idx >= 0 %}completed{% endif %} {% if current_step_idx == 0 %}active{% endif %}">
-            <div class="step-circle">
-              <i class="fa-solid fa-receipt"></i>
+          <h3 class="fw-bold mb-1">
+            {% if order.order_status == 'PLACED' %}Order Received by Kitchen
+            {% elif order.order_status == 'ACCEPTED' %}Chef Accepted Your Order
+            {% elif order.order_status == 'PREPARING' %}Cooking in Progress 🔥
+            {% elif order.order_status == 'READY' %}🎉 Ready for Pickup at Counter!
+            {% elif order.order_status == 'COMPLETED' %}Order Completed! Enjoy Your Food
+            {% else %}{{ order.order_status }}
+            {% endif %}
+          </h3>
+          
+          <p class="text-muted small mb-3">Estimated ready around: <b>{{ order.pickup_time or 'As soon as possible' }}</b> (~{{ order.estimated_prep_time }} mins total)</p>
+
+          <!-- Step-by-Step Progress Timeline -->
+          <div class="timeline-container my-4">
+            
+            <div class="timeline-step {% if current_step_idx >= 0 %}completed{% endif %} {% if current_step_idx == 0 %}active{% endif %}">
+              <div class="step-circle">
+                <i class="fa-solid fa-receipt"></i>
+              </div>
+              <div class="small fw-bold">Placed</div>
             </div>
-            <div class="small fw-bold">Placed</div>
-          </div>
 
-          <div class="timeline-step {% if current_step_idx >= 1 %}completed{% endif %} {% if current_step_idx == 1 %}active{% endif %}">
-            <div class="step-circle">
-              <i class="fa-solid fa-kitchen-set"></i>
+            <div class="timeline-step {% if current_step_idx >= 1 %}completed{% endif %} {% if current_step_idx == 1 %}active{% endif %}">
+              <div class="step-circle">
+                <i class="fa-solid fa-kitchen-set"></i>
+              </div>
+              <div class="small fw-bold">Accepted</div>
             </div>
-            <div class="small fw-bold">Accepted</div>
-          </div>
 
-          <div class="timeline-step {% if current_step_idx >= 2 %}completed{% endif %} {% if current_step_idx == 2 %}active{% endif %}">
-            <div class="step-circle">
-              <i class="fa-solid fa-fire-burner"></i>
+            <div class="timeline-step {% if current_step_idx >= 2 %}completed{% endif %} {% if current_step_idx == 2 %}active{% endif %}">
+              <div class="step-circle">
+                <i class="fa-solid fa-fire-burner"></i>
+              </div>
+              <div class="small fw-bold">Preparing</div>
             </div>
-            <div class="small fw-bold">Preparing</div>
-          </div>
 
-          <div class="timeline-step {% if current_step_idx >= 3 %}completed{% endif %} {% if current_step_idx == 3 %}active{% endif %}">
-            <div class="step-circle">
-              <i class="fa-solid fa-bell-concierge"></i>
+            <div class="timeline-step {% if current_step_idx >= 3 %}completed{% endif %} {% if current_step_idx == 3 %}active{% endif %}">
+              <div class="step-circle">
+                <i class="fa-solid fa-bell-concierge"></i>
+              </div>
+              <div class="small fw-bold">Ready</div>
             </div>
-            <div class="small fw-bold">Ready</div>
-          </div>
 
-          <div class="timeline-step {% if current_step_idx >= 4 %}completed{% endif %}">
-            <div class="step-circle">
-              <i class="fa-solid fa-check"></i>
+            <div class="timeline-step {% if current_step_idx >= 4 %}completed{% endif %}">
+              <div class="step-circle">
+                <i class="fa-solid fa-check"></i>
+              </div>
+              <div class="small fw-bold">Completed</div>
             </div>
-            <div class="small fw-bold">Completed</div>
+
           </div>
+        {% endif %}
 
-        </div>
+        <!-- Actions: Download Invoice, Rate, Cancel Button -->
+        <div class="d-flex justify-content-center gap-2 mt-3 flex-wrap">
+          {% if order.order_status != 'CANCELLED' %}
+            <a href="{{ url_for('student.download_receipt', order_id=order.id) }}" class="btn btn-outline-danger rounded-pill px-4 btn-sm">
+              <i class="fa-solid fa-file-pdf me-1"></i> Download PDF Invoice
+            </a>
+            <a href="{{ url_for('student.feedback') }}" class="btn btn-light border rounded-pill px-4 btn-sm">
+              <i class="fa-regular fa-star me-1"></i> Rate Experience
+            </a>
+          {% endif %}
 
-        <!-- Download Invoice & Feedback Buttons -->
-        <div class="d-flex justify-content-center gap-3 mt-3">
-          <a href="{{ url_for('student.download_receipt', order_id=order.id) }}" class="btn btn-outline-danger rounded-pill px-4 btn-sm">
-            <i class="fa-solid fa-file-pdf me-1"></i> Download PDF Invoice
-          </a>
-          <a href="{{ url_for('student.feedback') }}" class="btn btn-light border rounded-pill px-4 btn-sm">
-            <i class="fa-regular fa-star me-1"></i> Rate Experience
-          </a>
+          {% if order.order_status in ['PLACED', 'ACCEPTED'] %}
+            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#cancelOrderModal">
+              <i class="fa-solid fa-ban text-danger me-1"></i> Cancel Order
+            </button>
+          {% endif %}
         </div>
 
       </div>
@@ -118,6 +140,12 @@
             <span>Final Paid ({{ order.payment_method|upper }})</span>
             <span class="text-danger">₹{{ "%.2f"|format(order.final_amount) }}</span>
           </div>
+          {% if order.payment_status == 'REFUNDED' %}
+            <div class="d-flex justify-content-between text-success small fw-semibold mt-2 pt-2 border-top">
+              <span>Payment Status</span>
+              <span class="badge bg-success-subtle text-success rounded-pill px-3 py-1">Refunded to Wallet</span>
+            </div>
+          {% endif %}
         </div>
 
       </div>
@@ -126,6 +154,53 @@
   </div>
 
 </div>
+
+<!-- Modal: Cancel Order Confirmation -->
+{% if order.order_status in ['PLACED', 'ACCEPTED'] %}
+<div class="modal fade" id="cancelOrderModal" tabindex="-1" aria-labelledby="cancelOrderModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 border-0 shadow">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold text-danger" id="cancelOrderModalLabel">
+          <i class="fa-solid fa-triangle-exclamation me-2"></i> Cancel Order #{{ order.order_number }}
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form action="{{ url_for('student.cancel_order', order_id=order.id) }}" method="POST">
+        <div class="modal-body py-3">
+          <p class="text-muted small mb-3">
+            Are you sure you want to cancel this order? Since the chef has not started cooking yet, you are eligible for immediate cancellation.
+          </p>
+
+          {% if order.payment_status == 'PAID' %}
+            <div class="bg-success-subtle text-success p-3 rounded-3 mb-3 small border border-success-subtle">
+              <i class="fa-solid fa-wallet me-1"></i> <b>Instant Refund:</b> 
+              Full amount of <b>₹{{ "%.2f"|format(order.final_amount) }}</b> will be automatically refunded back to your <b>Campus Dining Wallet</b> immediately.
+            </div>
+          {% endif %}
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold small text-muted">Reason for Cancellation (Optional)</label>
+            <select name="reason" class="form-select bg-light small mb-2">
+              <option value="Ordered by mistake">Ordered by mistake</option>
+              <option value="Changed my mind">Changed my mind</option>
+              <option value="Waiting time too long">Waiting time too long</option>
+              <option value="Want to order different dishes">Want to order different dishes</option>
+              <option value="Other reason">Other reason</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-light rounded-pill px-4 btn-sm" data-bs-dismiss="modal">Keep Order</button>
+          <button type="submit" class="btn btn-danger rounded-pill px-4 btn-sm fw-bold">
+            <i class="fa-solid fa-ban me-1"></i> Confirm Cancel & Refund
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
 
 <!-- Auto-poll live order status every 4 seconds -->
 <script>
@@ -138,7 +213,6 @@ if (!['COMPLETED', 'CANCELLED'].includes(currentStatus)) {
       .then(r => r.json())
       .then(data => {
         if (data.status && data.status !== currentStatus) {
-          // Status updated! Reload to update progress bar and step styling
           location.reload();
         }
       })
