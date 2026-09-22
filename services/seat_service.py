@@ -149,18 +149,51 @@ class SeatService:
 
         return tables[0] if tables else None
 
-    def cancel_booking(self, booking_id: int, user_id: int, is_admin: bool = False) -> bool:
-        """Cancels a table reservation"""
+    def cancel_booking(self, booking_id: int, user_id: int, is_admin: bool = False) -> Dict[str, Any]:
+        """Cancels a table reservation and notifies student"""
         if is_admin:
-            booking = query_db("SELECT * FROM seat_bookings WHERE id = %s", (booking_id,), one=True)
+            booking = query_db("""
+                SELECT b.*, t.table_number, t.section 
+                FROM seat_bookings b 
+                JOIN seat_tables t ON b.table_id = t.id 
+                WHERE b.id = %s
+            """, (booking_id,), one=True)
         else:
-            booking = query_db("SELECT * FROM seat_bookings WHERE id = %s AND student_id = %s", (booking_id, user_id), one=True)
+            booking = query_db("""
+                SELECT b.*, t.table_number, t.section 
+                FROM seat_bookings b 
+                JOIN seat_tables t ON b.table_id = t.id 
+                WHERE b.id = %s AND b.student_id = %s
+            """, (booking_id, user_id), one=True)
 
         if not booking:
-            return False
+            raise ValueError("Reservation not found or unauthorized.")
+
+        if booking['status'] == 'CANCELLED':
+            raise ValueError("This table reservation has already been cancelled.")
 
         execute_db("UPDATE seat_bookings SET status = 'CANCELLED' WHERE id = %s", (booking_id,))
-        return True
+
+        msg = f"Your reservation for Table {booking['table_number']} ({booking['section']}) on {booking['booking_date']} at {booking['time_slot']} has been cancelled."
+        execute_db("""
+            INSERT INTO notifications (user_id, title, message, type, link, created_at)
+            VALUES (%s, %s, %s, 'seat', %s, NOW())
+        """, (
+            booking['student_id'],
+            f"Table {booking['table_number']} Cancelled",
+            msg,
+            "/student/seat-booking"
+        ))
+
+        return {
+            "success": True,
+            "booking_id": booking_id,
+            "table_number": booking['table_number'],
+            "section": booking['section'],
+            "booking_date": str(booking['booking_date']),
+            "time_slot": booking['time_slot'],
+            "message": msg
+        }
 
 # Singleton instance
 seat_service = SeatService()

@@ -59,7 +59,36 @@
     </div>
   {% endif %}
 
-  <!-- Categories Pill Carousel -->
+    <!-- Active Table Reservation Alert (if any) -->
+  {% if upcoming_seats %}
+    <div class="card border-warning border-2 shadow-sm rounded-4 p-3 mb-4 bg-white animate__animated animate__fadeIn">
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-3">
+          <div class="rounded-circle bg-warning text-dark d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+            <i class="fa-solid fa-chair fa-lg"></i>
+          </div>
+          <div>
+            <div class="badge bg-warning text-dark mb-1">Upcoming Seat Reservation</div>
+            <h6 class="fw-bold mb-0">Table {{ upcoming_seats[0].table_number }} ({{ upcoming_seats[0].section }})</h6>
+            <small class="text-muted">Date: <b>{{ upcoming_seats[0].booking_date }}</b> • Slot: <b>{{ upcoming_seats[0].time_slot }}</b> • Code: {{ upcoming_seats[0].booking_code }}</small>
+          </div>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+          <form action="{{ url_for('student.cancel_seat', booking_id=upcoming_seats[0].id) }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel your table reservation?')">
+            <input type="hidden" name="redirect_to" value="dashboard">
+            <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3">
+              <i class="fa-solid fa-ban me-1"></i> Cancel Seat
+            </button>
+          </form>
+          <a href="{{ url_for('student.seat_booking') }}" class="btn btn-outline-dark rounded-pill px-3 btn-sm">
+            View Map
+          </a>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+<!-- Categories Pill Carousel -->
   <div class="mb-4">
     <h5 class="fw-bold mb-3">Browse by Category</h5>
     <div class="category-pills-container">

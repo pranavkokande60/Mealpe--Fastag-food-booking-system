@@ -311,11 +311,15 @@ def seat_booking():
 @student_bp.route('/cancel-seat/<int:booking_id>', methods=['POST'])
 @login_required
 def cancel_seat(booking_id):
-    success = seat_service.cancel_booking(booking_id, session['user_id'])
-    if success:
-        flash('Seat reservation cancelled.', 'info')
-    else:
-        flash('Could not cancel booking.', 'danger')
+    try:
+        res = seat_service.cancel_booking(booking_id, session['user_id'], is_admin=(session.get('user_role') == 'admin'))
+        flash(f"Table {res['table_number']} reservation on {res['booking_date']} at {res['time_slot']} has been cancelled.", 'info')
+    except Exception as e:
+        flash(str(e), 'danger')
+
+    redirect_to = request.form.get('redirect_to')
+    if redirect_to == 'dashboard':
+        return redirect(url_for('student.dashboard'))
     return redirect(url_for('student.seat_booking'))
 
 @student_bp.route('/insights')
