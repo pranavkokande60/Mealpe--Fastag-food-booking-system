@@ -198,3 +198,12 @@ You can use the 1-Click Quick Demo Login switcher on the login page or manually 
 - [x] **2D Seat Map:** Interactive table selector with conflict-free locking.
 - [x] **AI Chatbot:** Natural language assistant for budget suggestions and order queries.
 - [x] **PDF Generation:** Official digital tax invoices and admin sales reports.
+
+
+## Copyright
+
+Copyright © 2026 Pranav Kokande. All rights reserved.
+
+This project and its source code are proprietary. No permission is
+granted to copy, modify, distribute, publish, or use this project
+or its source code without prior written permission from the author.
