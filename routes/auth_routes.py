@@ -154,6 +154,30 @@ def profile():
     user = query_db("SELECT * FROM users WHERE id = %s", (session['user_id'],), one=True)
 
     if request.method == 'POST':
+        action = request.form.get('action', 'update_profile')
+
+        if action == 'change_password':
+            old_password = request.form.get('old_password', '')
+            new_password = request.form.get('new_password', '')
+            confirm_password = request.form.get('confirm_password', '')
+
+            if not bcrypt.checkpw(old_password.encode('utf-8'), user['password_hash'].encode('utf-8')):
+                flash('Current password is incorrect.', 'danger')
+                return redirect(url_for('auth.profile'))
+
+            if len(new_password) < 6:
+                flash('New password must be at least 6 characters.', 'warning')
+                return redirect(url_for('auth.profile'))
+
+            if new_password != confirm_password:
+                flash('New password and confirmation do not match.', 'danger')
+                return redirect(url_for('auth.profile'))
+
+            new_hash = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            execute_db("UPDATE users SET password_hash = %s WHERE id = %s", (new_hash, session['user_id']))
+            flash('Password changed successfully!', 'success')
+            return redirect(url_for('auth.profile'))
+
         name = request.form.get('name', '').strip()
         phone = request.form.get('phone', '').strip()
         dietary_pref = request.form.get('dietary_pref', 'veg')

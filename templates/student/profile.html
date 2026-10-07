@@ -62,8 +62,35 @@
             </select>
           </div>
 
-          <button type="submit" class="btn btn-brand w-100 py-3 rounded-pill fw-bold">
+          <button type="submit" class="btn btn-brand w-100 py-3 rounded-pill fw-bold mb-4">
             Save Profile Changes
+          </button>
+        </form>
+
+        <!-- Change Password Card -->
+        <hr class="my-4">
+        <form action="{{ url_for('auth.profile') }}" method="POST">
+          <input type="hidden" name="action" value="change_password">
+          <h5 class="fw-bold mb-3"><i class="fa-solid fa-lock text-danger me-2"></i> Change Security Password</h5>
+          
+          <div class="mb-3">
+            <label class="form-label fw-semibold small text-muted">Current Password</label>
+            <input type="password" name="old_password" class="form-control bg-light" placeholder="Enter current password" required>
+          </div>
+
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small text-muted">New Password</label>
+              <input type="password" name="new_password" class="form-control bg-light" placeholder="Minimum 6 characters" minlength="6" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small text-muted">Confirm New Password</label>
+              <input type="password" name="confirm_password" class="form-control bg-light" placeholder="Re-type new password" minlength="6" required>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-outline-dark w-100 py-2 rounded-pill fw-bold">
+            Update Password
           </button>
         </form>
 

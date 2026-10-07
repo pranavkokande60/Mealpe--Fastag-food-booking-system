@@ -203,6 +203,30 @@ def order_track(order_id):
         current_step_idx=current_step_idx
     )
 
+@student_bp.route('/order/<int:order_id>/cancel', methods=['POST'])
+@login_required
+def cancel_order(order_id):
+    reason = request.form.get('reason', '').strip()
+    try:
+        res = order_service.cancel_order(
+            order_id=order_id,
+            user_id=session['user_id'],
+            role=session.get('user_role', 'student'),
+            reason=reason if reason else None
+        )
+        if res.get('refund_amount', 0) > 0:
+            session['wallet_balance'] = res['new_wallet_balance']
+            flash(f"Order #{res['order_number']} has been cancelled. ₹{res['refund_amount']:.2f} refunded to your dining wallet!", 'success')
+        else:
+            flash(f"Order #{res['order_number']} has been cancelled successfully.", 'info')
+    except Exception as e:
+        flash(str(e), 'danger')
+
+    redirect_to = request.form.get('redirect_to')
+    if redirect_to == 'history':
+        return redirect(url_for('student.order_history'))
+    return redirect(url_for('student.order_track', order_id=order_id))
+
 @student_bp.route('/receipt/<int:order_id>')
 @login_required
 def download_receipt(order_id):
@@ -286,11 +310,15 @@ def seat_booking():
 @student_bp.route('/cancel-seat/<int:booking_id>', methods=['POST'])
 @login_required
 def cancel_seat(booking_id):
-    success = seat_service.cancel_booking(booking_id, session['user_id'])
-    if success:
-        flash('Seat reservation cancelled.', 'info')
-    else:
-        flash('Could not cancel booking.', 'danger')
+    try:
+        res = seat_service.cancel_booking(booking_id, session['user_id'], is_admin=(session.get('user_role') == 'admin'))
+        flash(f"Table {res['table_number']} reservation on {res['booking_date']} at {res['time_slot']} has been cancelled.", 'info')
+    except Exception as e:
+        flash(str(e), 'danger')
+
+    redirect_to = request.form.get('redirect_to')
+    if redirect_to == 'dashboard':
+        return redirect(url_for('student.dashboard'))
     return redirect(url_for('student.seat_booking'))
 
 @student_bp.route('/insights')
@@ -315,7 +343,7 @@ def insights():
         JOIN orders o ON oi.order_id = o.id
         JOIN food_items f ON oi.food_id = f.id
         WHERE o.student_id = %s AND o.order_status != 'CANCELLED'
-        GROUP BY f.id
+        GROUP BY f.id, f.name, f.image_url
         ORDER BY freq DESC LIMIT 1
     """, (user_id,), one=True)
 
@@ -327,7 +355,7 @@ def insights():
         JOIN food_items f ON oi.food_id = f.id
         JOIN food_categories c ON f.category_id = c.id
         WHERE o.student_id = %s AND o.order_status != 'CANCELLED'
-        GROUP BY c.id
+        GROUP BY c.id, c.name
         ORDER BY count DESC
     """, (user_id,)) or []
 
@@ -336,7 +364,7 @@ def insights():
         SELECT strftime('%Y-%m', created_at) as month_label, SUM(final_amount) as total
         FROM orders
         WHERE student_id = %s AND order_status != 'CANCELLED'
-        GROUP BY month_label
+        GROUP BY strftime('%Y-%m', created_at)
         ORDER BY month_label DESC LIMIT 6
     """, (user_id,)) or []
 

@@ -1,4 +1,11 @@
 import os
+import sys
+
+# Ensure current directory is in Python module search path
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
+
 import datetime
 from flask import Flask, render_template, session, redirect, url_for
 from config import Config
@@ -107,5 +114,6 @@ def create_app():
 app = create_app()
 
 if __name__ == '__main__':
-    print("[*] Starting Smart Canteen AI Platform on http://127.0.0.1:5000")
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    print(f"[*] Starting Smart Canteen AI Platform on port {port}")
+    app.run(host='0.0.0.0', port=port)

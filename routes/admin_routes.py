@@ -60,7 +60,7 @@ def dashboard():
         FROM order_items oi
         JOIN food_items f ON oi.food_id = f.id
         JOIN food_categories c ON f.category_id = c.id
-        GROUP BY c.id
+        GROUP BY c.id, c.name
         ORDER BY total_amount DESC
     """) or []
 
@@ -79,7 +79,7 @@ def dashboard():
         JOIN users u ON o.student_id = u.id
         JOIN order_items oi ON o.id = oi.order_id
         JOIN food_items f ON oi.food_id = f.id
-        GROUP BY o.id
+        GROUP BY o.id, u.name
         ORDER BY o.created_at DESC LIMIT 8
     """) or []
 
@@ -280,7 +280,7 @@ def orders_manage():
         query += " AND (o.order_number LIKE %s OR u.name LIKE %s)"
         params.extend([f"%{search_q}%", f"%{search_q}%"])
 
-    query += " GROUP BY o.id ORDER BY o.created_at DESC"
+    query += " GROUP BY o.id, u.name, u.phone ORDER BY o.created_at DESC"
     orders = query_db(query, tuple(params)) or []
 
     return render_template('admin/orders.html', orders=orders, status_filter=status_filter, search_q=search_q)

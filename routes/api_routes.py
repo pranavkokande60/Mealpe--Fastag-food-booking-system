@@ -76,6 +76,25 @@ def get_order_status(order_id):
         "pickup_time": order['pickup_time']
     })
 
+@api_bp.route('/order/<int:order_id>/cancel', methods=['POST'])
+def cancel_order_api(order_id):
+    """Cancels order via API if student owns it and order is in PLACED/ACCEPTED state"""
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({"success": False, "error": "Authentication required"}), 401
+
+    data = request.get_json(silent=True) or {}
+    reason = data.get('reason') or request.form.get('reason')
+    role = session.get('user_role', 'student')
+
+    try:
+        res = order_service.cancel_order(order_id=order_id, user_id=user_id, role=role, reason=reason)
+        if res.get('refund_amount', 0) > 0:
+            session['wallet_balance'] = res['new_wallet_balance']
+        return jsonify(res)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+
 @api_bp.route('/seats/availability')
 def check_seat_availability():
     """Returns 2D seat map data for selected date and slot"""

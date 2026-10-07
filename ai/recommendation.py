@@ -41,7 +41,7 @@ class RecommendationEngine:
             JOIN orders o ON oi.order_id = o.id
             JOIN food_items f ON oi.food_id = f.id
             WHERE o.student_id = %s AND o.order_status != 'CANCELLED'
-            GROUP BY oi.food_id
+            GROUP BY oi.food_id, f.category_id, f.ingredients, f.price
             ORDER BY order_freq DESC
         """, (user_id,))
 

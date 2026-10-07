@@ -19,7 +19,7 @@ def dashboard():
         JOIN order_items oi ON o.id = oi.order_id
         JOIN food_items f ON oi.food_id = f.id
         WHERE o.order_status IN ('PLACED', 'ACCEPTED', 'PREPARING', 'READY')
-        GROUP BY o.id
+        GROUP BY o.id, u.name, u.phone
         ORDER BY o.created_at ASC
     """) or []
 

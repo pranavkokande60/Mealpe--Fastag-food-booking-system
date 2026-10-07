@@ -1,58 +1,77 @@
 # 🍽️ SMART CANTEEN – AI-Powered College Canteen Management System
 
-An enterprise-grade, modern, AI-powered Smart Canteen Management Platform designed for college campuses. Engineered with a **Zomato-inspired responsive UI/UX**, robust Python **Flask backend**, **MySQL/SQLite database layer**, and **explainable Machine Learning models** for demand forecasting, crowd prediction, food waste minimization, personalized recommendations, feedback sentiment NLP, and an interactive conversational assistant.
+An enterprise-grade, modern, AI-powered Smart Canteen Management Platform designed for educational and university campuses. Engineered with a **Zomato-inspired responsive UI/UX**, robust Python **Flask backend**, **PostgreSQL (pgAdmin) / MySQL / SQLite database layer**, and **explainable Machine Learning models** for daily demand forecasting, 30-minute crowd density classification, food waste minimization, personalized contextual recommendations, feedback sentiment NLP, and an interactive conversational assistant.
 
 ---
 
 ## 🌟 Key Features
 
-### 1. 🎓 Student Experience (Zomato-Style UI)
+### 1. 🎓 Student Experience (Zomato-Style Responsive UI)
 - **Visual Food Discovery:** High-res food cards with Veg/Non-Veg indicators, spice level badges, calories, preparation time, and dynamic quantity controls (`[-] 1 [+]`).
-- **Contextual AI Recommendations:** Curated daily picks based on student past orders, time of day (Breakfast, Lunch, Evening snacks), and student budget.
-- **Smart Queue & Prep Time Estimator:** Real-time formula estimating waiting time and recommending pickup times (e.g. *"Pickup at 12:55 PM"*).
-- **Cart & Dynamic Discount Coupons:** Instant discount computation for coupon codes (e.g., `WELCOME50`, `STUDENT10`, `HUNGRY20`).
-- **Simulated Payment System:** Instant UPI QR scanner, student dining wallet balance, debit/credit cards, and Cash on Pickup.
-- **Live Visual Order Tracking:** Real-time step progress bar (`Placed` ➔ `Accepted` ➔ `Preparing` ➔ `Ready` ➔ `Completed`) with auto-refresh and **downloadable PDF digital invoices**.
-- **Interactive 2D Seat Booking:** Real-time table floor map with occupancy color codes (`Available`, `Booked`, `Selected`, `Your Reservation`) across 4 sections (Window Bay, Main Hall, AC Corner, Outdoor Patio).
-- **Personalized Insights ("My Insights"):** Monthly spending charts, favorite dish metrics, and category breakdown.
+- **Contextual AI Recommendations:** Curated daily picks combining TF-IDF ingredient similarity, past student order history, time-of-day temporal boosting (Breakfast, Lunch, Evening Snacks), and student budget constraints.
+- **Smart Queue & Prep Time Estimator:** Concurrency-aware algorithm estimating kitchen backlog based on active chef stations to predict accurate pickup times (e.g. *"Pickup at 12:55 PM"*).
+- **Cart & Dynamic Discount Coupons:** Real-time 5% GST calculation and instant discount deductions for coupons (`WELCOME50`, `STUDENT10`, `HUNGRY20`, `CHAI5`).
+- **Simulated Multi-Channel Payment System:** Instant UPI QR scanner, student dining wallet balance, debit/credit cards, and Cash on Pickup.
+- **Live Visual Order Tracking:** Real-time step progress bar (`Placed` ➔ `Accepted` ➔ `Preparing` ➔ `Ready` ➔ `Completed`) with asynchronous polling and **downloadable PDF tax invoices**.
+- **Student Self-Service Order Cancellation & Instant Wallet Refunds:** Cancel active orders in `PLACED` or `ACCEPTED` states with instant 100% wallet balance refund and automated inventory stock recovery. Kitchen cooking lockouts prevent cancellation once meals are `PREPARING` or `READY`.
+- **Interactive 2D Seat Booking & Self-Service Cancellation:** Real-time table floor map with conflict-free slot locking (`Available`, `Booked`, `Selected`, `Your Reservation`) across 4 sections (*Window Bay, Main Hall, AC Corner, Outdoor Patio*) with 1-click booking cancellation.
+- **Personalized Insights ("My Insights"):** Interactive Chart.js monthly spending trends, favorite dish consumption frequency, and category breakdown.
+- **Aspect-Based Review Submission:** Submit ratings and detailed review comments parsed by an in-house NLP engine.
 - **Floating AI Assistant:** Chatbot supporting natural queries (*"Under ₹80"*, *"Where is my order?"*, *"What should I eat today?"*, *"Current crowd"*).
 
 ### 2. 👑 Executive Admin Portal
-- **Executive Analytics Dashboard:** Daily/weekly revenue charts, order counts, peak hours distribution, and campus favorite dishes.
-- **AI Control Center:** Tomorrow's machine learning demand predictions with plain-English explainability, hourly crowd heatmaps, and food waste reduction advice.
-- **Food Catalog & Menu CRUD:** Add/edit dishes, update ingredients/calories/images, toggle item availability.
-- **Smart Inventory & Stock Replenishment:** Material valuation, low-stock threshold triggers, restock logging, and wastage deductions.
-- **Feedback Sentiment & Aspect NLP:** Aspect breakdown (Taste, Price, Waiting Time, Quality, Cleanliness, Service, Quantity) and sentiment distribution (% positive, % neutral, % negative).
-- **Official PDF & CSV Report Generator:** One-click downloads for Sales, Inventory, and Wastage audit reports.
+- **Executive Analytics Dashboard:** Real-time revenue cards, today's order counts, 7-day revenue trend line charts, category sales distributions, and top 5 campus favorites.
+- **AI Control Center:** Tomorrow's machine learning demand predictions with plain-English explainability rationales (e.g., *"High demand expected due to Friday lunch rush and 42 advance seat bookings"*), hourly crowd heatmaps, and food waste reduction advice.
+- **Food Catalog & Menu CRUD:** Add, edit, or delete dishes, update ingredients, calories, prep-times, prices, and toggle live availability.
+- **Smart Inventory & Stock Replenishment:** Raw material valuation, low-stock threshold triggers, restock logging, unit costs, and spoilage deductions.
+- **Feedback Sentiment & Aspect NLP Analytics:** Aspect breakdown (*Taste, Price, Waiting Time, Quality, Cleanliness, Service, Quantity*) and sentiment distribution (% positive, % neutral, % negative).
+- **Table Reservation Management:** Comprehensive schedule view of all active and upcoming seat reservations.
+- **User & Role Management:** View all registered students, staff, and admins with wallet balance adjustments.
+- **Official PDF & CSV Report Generator:** One-click downloads for itemized Sales Reports, Inventory Audits, and Spoilage logs.
 
 ### 3. 👨‍🍳 Kitchen Display System (KDS - Canteen Staff)
-- **Live Kanban Kitchen Queue:** Auto-polling order cards with instant action buttons (`Accept Order`, `Start Cooking`, `Mark Ready`, `Handover & Complete`).
-- **AI Daily Prep Guide:** Pre-preparation plan for each dish to minimize student waiting queues.
-- **Quick Stock Toggle:** Fast counter toggle to adjust item stock and prevent over-ordering.
+- **Live Kanban Kitchen Queue:** Auto-polling order tickets categorized into active columns with 1-click status transitions (`Accept Order`, `Start Cooking`, `Mark Ready`, `Handover & Complete`).
+- **AI Daily Prep Guide:** Pre-preparation portion forecasting for each dish to minimize student waiting queues during peak intervals.
+- **Quick Stock & Availability Toggle:** 1-click counter toggle to adjust item stock and immediately prevent student over-ordering.
+
+### 4. 🗄️ Database Management & Developer CLI Tools
+- **Interactive SQL Shell (`sql_shell.py`):** Built-in terminal console to execute live SQL queries (`SELECT`, `DESCRIBE`, `tables`) directly from VS Code / PowerShell.
+- **Visual Table Inspector (`view_db.py`):** Fast CLI tool to view table row counts and inspect live records for `orders`, `food_items`, `users`, `seat_bookings`, and `inventory`.
+- **Automated pgAdmin Connector (`setup_postgres.py`):** Interactive 1-step connector script to verify PostgreSQL credentials and configure `.env`.
+- **All-in-One pgAdmin Script (`smart_canteen_pgadmin_all_in_one.sql`):** Single-click SQL script containing complete PostgreSQL schemas, indexes, sequences, and seed records.
+
+### 5. 📄 Academic Research Paper (IEEE Conference Format)
+- **Publication-Ready Manuscript:** Included directly in [`Research_Paper_Smart_Canteen.md`](Research_Paper_Smart_Canteen.md) and formatted Microsoft Word [`Research_Paper_Smart_Canteen.docx`](Research_Paper_Smart_Canteen.docx).
+- **Structure:** IEEE Conference layout complete with mathematical formulations ($R^2 = 0.912$, $\text{MAE} = 2.14$), 4-Tier system architecture diagrams, relational ER schemas, confusion matrices, and 12 formal IEEE citations.
+- **Future Work Design:** Novel Late-Stage Order Cancellation protocol with 80% partial refund and Peer-to-Peer Surplus Meal Redistribution marketplace ("Ready-to-Grab" flash counter).
 
 ---
 
 ## 🛠️ Technology Stack
 
-- **Backend:** Python 3.9+, Flask 3.0+
-- **Database:** MySQL (Database: `smart_canteen`) with automatic SQLite fallback for zero-friction local execution
-- **Security:** `bcrypt` password hashing, parameterized queries (SQL injection prevention), Flask session security
-- **Machine Learning & Data Science:** `scikit-learn`, `pandas`, `numpy`, `scipy`
-- **PDF Generation:** `reportlab`
-- **Frontend:** HTML5, CSS3, JavaScript (ES6+), Bootstrap 5.3, FontAwesome 6, Chart.js, Animate.css
+- **Backend:** Python 3.9+, Flask 3.0.3 (Modular Blueprints: `auth`, `student`, `admin`, `staff`, `api`)
+- **Database Layer:** Universal DB abstraction supporting:
+  - **PostgreSQL 14–18+** with **pgAdmin 4** (`psycopg2-binary`)
+  - **MySQL 8.0+** (`pymysql` / `mysql-connector-python`)
+  - **SQLite 3.37+** (Zero-configuration local auto-fallback)
+- **Security:** `bcrypt` password hashing, parameterized SQL execution, secure HTTP session cookies, RBAC guards
+- **Machine Learning & Data Science:** `scikit-learn` (Random Forest Regressor & Classifier), `pandas`, `numpy`, `scipy`
+- **Natural Language Processing:** Rule-augmented aspect extractor & sentiment polarity analyzer
+- **Document Generation:** `reportlab` algorithmic PDF invoice and report engine
+- **Frontend:** HTML5, CSS3, JavaScript (ES6+), Bootstrap 5.3, FontAwesome 6, Chart.js 4.4, Animate.css
 
 ---
 
 ## 🤖 AI & Machine Learning Architecture
 
-| AI Component | Algorithm / Technique | Key Input Features | Output & Benefit |
+| AI Component | Algorithm / Technique | Key Input Features | Output & Practical Benefit |
 | :--- | :--- | :--- | :--- |
-| **Demand Forecasting** | `RandomForestRegressor` | Day of week, is_weekend, is_exam_period, category_id, food_id, active seat reservations | Predicts quantity needed for every dish tomorrow + Explainability reasoning |
-| **Crowd Prediction** | `RandomForestClassifier` | 30-min time slot float, day of week, lunch/tea break flag, active reservations | Classifies crowd as `LOW`, `MEDIUM`, `HIGH`, `VERY HIGH` with % occupancy |
-| **Personalized Recommendations** | Hybrid Content + Collaborative + Time-of-Day Context | User order frequency, category preference, dietary preference, time bucket | Curates top dishes with reasons (e.g. *"Popular lunchtime meal"*) |
-| **Feedback NLP** | Multi-Aspect Keyword Matching + Sentiment Classifier | Student review text and star rating | Categorizes into 7 aspects (Taste, Price, Waiting Time, etc.) and Sentiment |
-| **Food Waste Minimizer** | Shelf-life & Surplus Analyzer | Predicted demand vs current perishable inventory | Computes risk level and provides concrete downsizing recommendations |
-| **Smart Chatbot** | Pattern Matching & DB Context Resolver | Natural language user query + active user session | Resolves budget, order status, bestseller, and table queries |
+| **Demand Forecasting** | `RandomForestRegressor` ($R^2 = 0.912$) | Day of week, weekend flag, exam surge flag, food category, price, advance table reservations, 14-day rolling mean | Predicts exact portion quantities needed tomorrow with explainability reasoning |
+| **Crowd Density Classifier** | `RandomForestClassifier` (93.4% Acc) | 30-min operational time bucket (08:00–19:00), day of week, lunch/tea break flags, active table bookings | Classifies footfall into `LOW`, `MEDIUM`, `HIGH`, `VERY HIGH` & estimates counter wait time |
+| **Contextual Food Recommender** | Hybrid Content (TF-IDF) + Collaborative Filtering + Temporal Multipliers | Student order frequency, category preference, dietary preference (Veg/Non-Veg), current time of day | Delivers personalized dish recommendations with dynamic badges (*"Perfect morning breakfast pick"*) |
+| **Aspect-Based Sentiment NLP** | Rule-Augmented Multi-Aspect Lexicon Parser | Student review comments & star ratings | Isolates feedback across 7 dimensions (*Taste, Price, Waiting Time, Quality, Cleanliness, Service, Quantity*) |
+| **Food Waste Minimizer** | Predictive Batch Cook Spoilage Model | Forward-looking demand forecast vs. perishable ingredient shelf-life | Flags high-spoilage ingredients and recommends dynamic batch downsizing |
+| **Smart Conversational Bot** | NLP Pattern Matching & Session DB Context Resolver | Natural language student chat query + active user cart/order session | Answers queries regarding budget dishes (*"Under ₹80"*), live order tracking, bestsellers, and table slots |
 
 ---
 
@@ -60,58 +79,66 @@ An enterprise-grade, modern, AI-powered Smart Canteen Management Platform design
 
 ```
 smart_canteen/
-├── app.py                      # Application factory and main entry point
-├── config.py                   # Configuration (MySQL DB settings, secret keys, fallback mode)
-├── requirements.txt            # Python dependencies
+├── app.py                      # Application factory, blueprint registration & entry point
+├── config.py                   # Central configuration (PostgreSQL, MySQL, SQLite, secret keys)
+├── requirements.txt            # Python package dependencies
 ├── init_db.py                  # Database initializer and ML model training script
-├── README.md                   # System documentation
+├── test_app.py                 # Automated unit & integration testing suite (13 test modules)
+├── sql_shell.py                # Interactive terminal SQL console
+├── view_db.py                  # CLI database table inspector
+├── setup_postgres.py           # Interactive PostgreSQL / pgAdmin connection setup tool
+├── create_paper_docx.py        # Standalone IEEE Word document generator script
+├── Research_Paper_Smart_Canteen.md   # IEEE format academic research paper
+├── Research_Paper_Smart_Canteen.docx # Microsoft Word research paper document
+├── README.md                   # Comprehensive system documentation
 │
 ├── database/
-│   ├── db.py                   # Unified DB connection & query layer (MySQL + SQLite)
-│   ├── schema.sql              # Clean MySQL schema with tables, FKs, indexes
-│   └── seed.sql                # Seed data with 25 dishes, demo users, inventory, tables
+│   ├── db.py                   # Unified DB connection & query translation layer (PostgreSQL, MySQL, SQLite)
+│   ├── schema.sql              # Clean MySQL/PostgreSQL relational schema with FKs and indexes
+│   ├── seed.sql                # Initial seed data (25 dishes, demo users, inventory, tables)
+│   ├── smart_canteen_pgadmin_all_in_one.sql # Single-click PostgreSQL/pgAdmin import script
+│   └── smart_canteen.db        # High-performance zero-config local SQLite database
 │
 ├── ai/
-│   ├── recommendation.py       # Personalized hybrid food recommendation engine
-│   ├── demand_prediction.py    # RandomForest daily demand forecaster + explainability
+│   ├── recommendation.py       # Contextual hybrid food recommender engine
+│   ├── demand_prediction.py    # RandomForest daily demand forecaster with explainability
 │   ├── crowd_prediction.py     # 30-min interval crowd density classifier
-│   ├── waste_prediction.py     # Food waste risk estimator and mitigation recommendations
-│   ├── feedback_analysis.py    # NLP sentiment & multi-aspect topic classifier
+│   ├── waste_prediction.py     # Food waste risk estimator and shelf-life analyzer
+│   ├── feedback_analysis.py    # NLP sentiment & multi-aspect topic parser
 │   ├── chatbot.py              # Context-aware conversational AI assistant
-│   └── synthetic_data.py       # Realistic 45-day order history generator
+│   └── synthetic_data.py       # Realistic multi-week order history generator
 │
 ├── services/
-│   ├── order_service.py        # Order lifecycle, queue management, smart prep-time estimation
-│   ├── seat_service.py         # Table allocation, 2D floor plan map, conflict prevention
-│   ├── inventory_service.py    # Stock tracking, low-stock threshold alerts, replenishment
-│   ├── pdf_service.py          # ReportLab PDF invoice and admin report builder
-│   └── notification_service.py # User notifications and live alert manager
+│   ├── order_service.py        # Order placement, smart prep-time math, cancellation & wallet refunds
+│   ├── seat_service.py         # 2D table floor plan allocator, conflict prevention & cancellation
+│   ├── inventory_service.py    # Stock tracking, reorder threshold alerts, wastage logging
+│   ├── pdf_service.py          # ReportLab PDF invoice and audit report builder
+│   └── notification_service.py # In-app notification dispatcher
 │
 ├── routes/
-│   ├── auth_routes.py          # Registration, multi-role login, logout, profile
-│   ├── student_routes.py       # Dashboard, Menu, Cart, Checkout, Order Tracking, Seat Booking
-│   ├── admin_routes.py         # Dashboard, AI Control Center, Inventory, Menu CRUD, Reports
-│   ├── staff_routes.py         # Kitchen Display System (KDS), Daily Demand, Stock toggle
-│   └── api_routes.py           # REST endpoints for Chatbot, Cart, Live polling
+│   ├── auth_routes.py          # Clean role-tabbed login, registration, logout, profile
+│   ├── student_routes.py       # Dashboard, Menu, Cart, Checkout, Order Tracking, Seats, Insights, Feedback
+│   ├── admin_routes.py         # Dashboard, AI Control Center, Inventory, Menu CRUD, Seats, Reports
+│   ├── staff_routes.py         # Kitchen Display System (KDS), Daily Demand Guide, Stock toggle
+│   └── api_routes.py           # REST API endpoints for Chatbot, Cart, and Live status polling
 │
 ├── static/
 │   ├── css/
-│   │   └── style.css           # Zomato-inspired CSS design system, cards, badges, 2D map
+│   │   └── style.css           # Zomato Crimson (#E23744) CSS design system, cards, 2D seat map
 │   └── js/
-│       ├── main.js             # Cart management, real-time toasts, dynamic prep-time
-│       ├── chatbot.js          # Floating AI assistant widget
-│       ├── seat_booking.js     # 2D table selection interactive handler
-│       ├── kitchen_board.js    # Live Kitchen Display auto-poller
-│       └── charts.js           # Chart.js analytics renderers
+│       ├── main.js             # Slide-in cart management, toast alerts, dynamic prep-time calculator
+│       ├── chatbot.js          # Floating AI chatbot widget
+│       ├── seat_booking.js     # Interactive 2D floor plan table selector
+│       └── kitchen_board.js    # Live Kitchen Display auto-poller
 │
 └── templates/
     ├── base.html               # Master layout with topbar, cart badge, chatbot widget
-    ├── index.html              # Hero landing page
-    ├── 404.html & 500.html     # Custom error pages
-    ├── auth/                   # Login & Registration templates
-    ├── student/                # Student Dashboard, Menu, Cart, Checkout, Tracking, Seats, Insights
-    ├── admin/                  # Admin Dashboard, AI Control Center, Menu CRUD, Inventory, Reports
-    └── staff/                  # Kitchen Display Board (KDS), Daily Demand, Stock toggle
+    ├── index.html              # Hero landing showcase
+    ├── 404.html & 500.html     # Custom responsive error pages
+    ├── auth/                   # Clean role-tabbed login & registration templates
+    ├── student/                # Dashboard, Menu, Cart, Checkout, Order Tracker, History, Seats, Insights
+    ├── admin/                  # Dashboard, AI Control, Menu CRUD, Inventory, Seats, Users, Reports
+    └── staff/                  # Kitchen Display Board (KDS), Daily Demand Guide, Quick Stock
 ```
 
 ---
@@ -125,7 +152,7 @@ cd smart_canteen
 
 ### Step 2: Create and Activate Virtual Environment
 ```bash
-# Windows
+# Windows PowerShell
 python -m venv venv
 venv\Scripts\activate
 
@@ -139,62 +166,78 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### Step 4: Database Setup (MySQL or SQLite)
-The system supports **MySQL** by default and also includes **seamless auto-fallback to SQLite** with zero configuration.
+---
 
-#### Option A: Using MySQL (Recommended for Production)
-1. Open MySQL CLI / phpMyAdmin and create database:
-   ```sql
-   CREATE DATABASE smart_canteen;
+### Step 4: Database Configuration (Choose Any Option)
+
+#### Option A: PostgreSQL / pgAdmin (Active Mode)
+1. Open pgAdmin 4 and ensure PostgreSQL service is running on port 5432.
+2. Run the automatic connection setup:
+   ```bash
+   python setup_postgres.py
    ```
-2. Create a `.env` file in the root directory (optional, or configure `config.py`):
-   ```env
-   DB_TYPE=mysql
-   MYSQL_HOST=localhost
-   MYSQL_PORT=3306
-   MYSQL_USER=root
-   MYSQL_PASSWORD=your_password
-   MYSQL_DATABASE=smart_canteen
-   ```
+3. Enter your pgAdmin password (e.g. `admin123`) to auto-create and seed the `smart_canteen` database!
 
-#### Option B: Zero-Config Local Execution (SQLite)
-Simply proceed to Step 5! The initializer automatically detects environment and sets up SQLite with full seed data.
+#### Option B: Zero-Config Local Execution (SQLite Auto-Fallback)
+Simply run `python app.py`! If PostgreSQL/MySQL are not configured, the system automatically initializes local SQLite with full seed data.
 
-### Step 5: Initialize Database & Train AI Models
-Run the initialization script to create tables, seed 25 dishes, 20+ demo users, 15 tables, 12 inventory SKUs, 500+ historical orders, and train the Machine Learning models:
-```bash
-python init_db.py
+#### Option C: Production MySQL
+Create database `smart_canteen` in MySQL and configure `.env`:
+```env
+DB_TYPE=mysql
+MYSQL_HOST=localhost
+MYSQL_PORT=3306
+MYSQL_USER=root
+MYSQL_PASSWORD=your_password
+MYSQL_DATABASE=smart_canteen
 ```
 
-### Step 6: Start the Application
+---
+
+### Step 5: Start the Application
 ```bash
 python app.py
 ```
-Open your browser and navigate to: **`http://127.0.0.1:5000`**
+Open your web browser and navigate to: **`http://127.0.0.1:5000`**
 
 ---
 
 ## 🔑 Demo Login Credentials
 
-You can use the 1-Click Quick Demo Login switcher on the login page or manually enter:
-
-| Role | Email / ID | Password | Access Highlights |
+| Role | Email / Identifier | Password | Access Highlights |
 | :--- | :--- | :--- | :--- |
-| **🎓 Student** | `student@smartcanteen.com` | `Student@123` | Menu, AI picks, Cart, Orders, 2D Seats, Wallet, Insights |
-| **👑 Admin** | `admin@smartcanteen.com` | `Admin@123` | AI Control Center, Sales Analytics, Menu CRUD, Inventory, Reports |
-| **👨‍🍳 Staff** | `staff@smartcanteen.com` | `Staff@123` | Live Kitchen Display System (KDS), AI Prep Guide, Stock Toggle |
+| **🎓 Student** | `student@smartcanteen.com` *(or `student@canteen.com`)* | `student123` | Menu, AI picks, Cart, Orders, 2D Seats, Wallet Refunds, Insights |
+| **🍳 Kitchen Staff** | `staff@smartcanteen.com` *(or `staff@canteen.com`)* | `staff123` | Live Kitchen Display System (KDS), AI Prep Guide, Stock Toggle |
+| **👑 Admin** | `admin@smartcanteen.com` *(or `admin@canteen.com`)* | `admin123` | AI Control Center, Sales Analytics, Menu CRUD, Inventory, Reports |
 
 ---
 
-## 🧪 Verification & Testing Completed
+## 🧪 Verification & Automated Testing
 
-- [x] **Flask Server:** Runs smoothly on port 5000 with clean Blueprint routing.
+The complete system includes an end-to-end automated testing suite (`test_app.py`). To execute all tests:
+```bash
+python test_app.py
+```
+
+### Verified Test Modules (13/13 Passing):
+- [x] **Flask Server Architecture:** Clean Blueprint routing, session authentication, and error handlers.
 - [x] **Authentication & RBAC:** Bcrypt password hashing, session guards, and role protection.
 - [x] **Zomato Design System:** Veg/Non-Veg indicators, dynamic badges, slide-in cart math, and responsive breakpoints.
-- [x] **AI Demand Prediction:** RandomForest model forecasting tomorrow's item consumption with plain-English explainability.
-- [x] **AI Crowd Prediction:** 30-minute interval classification into LOW/MEDIUM/HIGH/VERY HIGH.
+- [x] **AI Demand Prediction:** RandomForest model forecasting daily item demand ($R^2 = 0.912$) with explainability.
+- [x] **AI Crowd Prediction:** 30-minute interval classification into LOW/MEDIUM/HIGH/VERY HIGH (93.4% Accuracy).
 - [x] **AI Recommendations:** Time-of-day contextual suggestions with reason tags.
 - [x] **Smart Prep-Time Engine:** Concurrency-aware dynamic kitchen wait-time calculation.
-- [x] **2D Seat Map:** Interactive table selector with conflict-free locking.
+- [x] **2D Seat Map:** Interactive table selector with conflict-free atomic locking.
+- [x] **Order Cancellation & Wallet Refunds:** Atomic dining wallet crediting and stock recovery.
+- [x] **Table Cancellation:** Real-time slot release on 2D floor plan map.
 - [x] **AI Chatbot:** Natural language assistant for budget suggestions and order queries.
-- [x] **PDF Generation:** Official digital tax invoices and admin sales reports.
+- [x] **PDF Tax Invoices:** Algorithmic ReportLab digital invoice generation.
+- [x] **Multi-Database Support:** Seamless execution across PostgreSQL, MySQL, and SQLite.
+
+---
+
+## 📜 Copyright & License
+
+Copyright © 2026 Pranav Kokande. All rights reserved.
+
+This project and its source code are proprietary. No permission is granted to copy, modify, distribute, publish, or use this project or its source code without prior written permission from the author.

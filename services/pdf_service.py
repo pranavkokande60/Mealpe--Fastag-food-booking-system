@@ -84,11 +84,11 @@ class PDFService:
 
         elements = []
 
-        # 1. Header Section
+        date_str = order['created_at'].strftime('%Y-%m-%d') if hasattr(order['created_at'], 'strftime') else str(order['created_at']).split()[0]
         header_data = [
             [
                 Paragraph("<b>SMART CANTEEN</b><br/><font size=9 color='#64748B'>AI-Powered Campus Dining</font>", title_style),
-                Paragraph(f"<b>TAX INVOICE / RECEIPT</b><br/>Invoice #: <b>{order['order_number']}</b><br/>Date: {order['created_at'].split()[0]}", right_style)
+                Paragraph(f"<b>TAX INVOICE / RECEIPT</b><br/>Invoice #: <b>{order['order_number']}</b><br/>Date: {date_str}", right_style)
             ]
         ]
         header_table = Table(header_data, colWidths=[280, 240])

@@ -67,7 +67,8 @@
                 <div class="table-card {{ t.status }}"
                      data-table-id="{{ t.id }}"
                      data-table-number="{{ t.table_number }}"
-                     data-table-capacity="{{ t.capacity }}">
+                     data-table-capacity="{{ t.capacity }}"
+                     data-table-status="{{ t.status }}">
                   <div class="table-icon">
                     <i class="fa-solid fa-utensils"></i>
                   </div>
@@ -88,7 +89,7 @@
 
     </div>
 
-    <!-- Right: Confirmation Sidebar -->
+    <!-- Right: Confirmation & Active Reservations Sidebar -->
     <div class="col-lg-4">
       <div class="card border-0 shadow-sm rounded-4 p-4 bg-white sticky-top" style="top: 90px;">
         <h5 class="fw-bold mb-3">Confirm Reservation</h5>
@@ -123,18 +124,24 @@
           </button>
         </form>
 
-        <!-- Active Bookings Summary -->
+        <!-- Active Bookings Summary with Cancel Feature -->
         {% if my_bookings %}
           <div class="mt-4 pt-3 border-top">
-            <h6 class="fw-bold mb-2">Your Upcoming Reservations</h6>
+            <h6 class="fw-bold mb-3"><i class="fa-solid fa-calendar-check text-warning me-1"></i> Your Active Reservations</h6>
             {% for mb in my_bookings %}
-              <div class="p-2 bg-light rounded-3 mb-2 small d-flex justify-content-between align-items-center">
-                <div>
-                  <div class="fw-bold">Table {{ mb.table_number }} ({{ mb.section }})</div>
-                  <div class="text-muted">{{ mb.booking_date }} at {{ mb.time_slot }}</div>
+              <div class="p-3 bg-light rounded-3 mb-3 border">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <span class="fw-bold text-danger">Table {{ mb.table_number }}</span>
+                  <span class="badge bg-warning text-dark rounded-pill">{{ mb.time_slot }}</span>
                 </div>
-                <form action="{{ url_for('student.cancel_seat', booking_id=mb.id) }}" method="POST">
-                  <button type="submit" class="btn btn-link text-danger p-0 small text-decoration-none">Cancel</button>
+                <div class="small text-muted mb-2">
+                  <i class="fa-regular fa-calendar me-1"></i> {{ mb.booking_date }} • {{ mb.section }} ({{ mb.guests_count }} Guests)
+                  <br><span class="badge bg-light text-secondary border mt-1">Code: {{ mb.booking_code }}</span>
+                </div>
+                <form action="{{ url_for('student.cancel_seat', booking_id=mb.id) }}" method="POST" onsubmit="return confirm('Cancel reservation for Table {{ mb.table_number }} on {{ mb.booking_date }} at {{ mb.time_slot }}?')">
+                  <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill w-100 py-1">
+                    <i class="fa-solid fa-ban me-1"></i> Cancel Reservation
+                  </button>
                 </form>
               </div>
             {% endfor %}

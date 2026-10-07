@@ -136,5 +136,84 @@ class SmartCanteenSystemTests(unittest.TestCase):
         admin_pdf = pdf_service.generate_admin_report_pdf('sales')
         self.assertGreater(admin_pdf.getbuffer().nbytes, 1000)
 
+    def test_12_student_order_cancellation(self):
+        """Test student order cancellation, wallet refund, stock restoration, and cancellation lock"""
+        student_id = 6
+        initial_user = query_db("SELECT wallet_balance FROM users WHERE id = %s", (student_id,), one=True)
+        initial_balance = float(initial_user['wallet_balance'])
+
+        food = query_db("SELECT id, stock_quantity FROM food_items WHERE id = 1", one=True)
+        initial_stock = int(food['stock_quantity'])
+
+        # 1. Place an order with UPI / Paid status
+        cart_items = [{"id": 1, "quantity": 2}]
+        order_res = order_service.place_order(
+            student_id=student_id,
+            cart_items=cart_items,
+            payment_method='upi'
+        )
+        order_id = order_res['order_id']
+        refund_expected = float(order_res['final_amount'])
+
+        # Check stock decremented
+        food_after = query_db("SELECT stock_quantity FROM food_items WHERE id = 1", one=True)
+        self.assertEqual(int(food_after['stock_quantity']), initial_stock - 2)
+
+        # 2. Cancel order in PLACED state
+        cancel_res = order_service.cancel_order(
+            order_id=order_id,
+            user_id=student_id,
+            role='student',
+            reason='Changed my mind'
+        )
+        self.assertTrue(cancel_res['success'])
+        self.assertEqual(cancel_res['refund_amount'], refund_expected)
+
+        # Check stock restored
+        food_restored = query_db("SELECT stock_quantity FROM food_items WHERE id = 1", one=True)
+        self.assertEqual(int(food_restored['stock_quantity']), initial_stock)
+
+        # Check wallet refunded
+        user_after = query_db("SELECT wallet_balance FROM users WHERE id = %s", (student_id,), one=True)
+        self.assertAlmostEqual(float(user_after['wallet_balance']), initial_balance + refund_expected, places=2)
+
+        # 3. Check cannot cancel twice
+        with self.assertRaises(ValueError):
+            order_service.cancel_order(order_id=order_id, user_id=student_id, role='student')
+
+        # 4. Check cannot cancel when order is in PREPARING / READY / COMPLETED state
+        order_res2 = order_service.place_order(
+            student_id=student_id,
+            cart_items=[{"id": 1, "quantity": 1}],
+            payment_method='cash_on_pickup'
+        )
+        order_service.update_order_status(order_res2['order_id'], 'PREPARING')
+        with self.assertRaises(ValueError):
+            order_service.cancel_order(order_id=order_res2['order_id'], user_id=student_id, role='student')
+
+    def test_13_table_booking_cancellation(self):
+        """Test table booking cancellation, freeing slot, and re-booking"""
+        student_id = 6
+        target_date = (datetime.date.today() + datetime.timedelta(days=12)).strftime('%Y-%m-%d')
+        target_slot = "13:00 - 13:30"
+        execute_db("DELETE FROM seat_bookings WHERE booking_date = %s", (target_date,))
+
+        # 1. Book table 2
+        res = seat_service.book_seat(student_id=student_id, table_id=2, booking_date=target_date, time_slot=target_slot, guests_count=2)
+        booking_id = res['booking_id']
+
+        # 2. Cancel the reservation
+        cancel_res = seat_service.cancel_booking(booking_id=booking_id, user_id=student_id)
+        self.assertTrue(cancel_res['success'])
+        self.assertEqual(cancel_res['table_number'], 'T-02')
+
+        # Check DB status is CANCELLED
+        b_after = query_db("SELECT status FROM seat_bookings WHERE id = %s", (booking_id,), one=True)
+        self.assertEqual(b_after['status'], 'CANCELLED')
+
+        # 3. Another student can now book the same table and slot without conflict
+        res_new = seat_service.book_seat(student_id=7, table_id=2, booking_date=target_date, time_slot=target_slot, guests_count=2)
+        self.assertIn('booking_code', res_new)
+
 if __name__ == '__main__':
     unittest.main()
