@@ -84,6 +84,12 @@
               <li class="nav-item">
                 <a class="nav-link nav-link-custom" href="{{ url_for('admin.orders_manage') }}"><i class="fa-solid fa-receipt me-1"></i> Orders</a>
               </li>
+              <li class="nav-item">
+                <a class="nav-link nav-link-custom" href="{{ url_for('admin.seats_manage') }}"><i class="fa-solid fa-chair me-1"></i> Seats</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link nav-link-custom" href="{{ url_for('admin.feedback_analytics') }}"><i class="fa-solid fa-comments me-1"></i> Feedback NLP</a>
+              </li>
             {% elif current_user.role == 'staff' %}
               <li class="nav-item">
                 <a class="nav-link nav-link-custom" href="{{ url_for('staff.dashboard') }}"><i class="fa-solid fa-fire-burner me-1"></i> Kitchen KDS</a>
@@ -151,6 +157,9 @@
                   <li><a class="dropdown-item rounded-2 py-2" href="{{ url_for('student.feedback') }}"><i class="fa-regular fa-star me-2 text-muted"></i> Give Feedback</a></li>
                 {% elif current_user.role == 'admin' %}
                   <li><a class="dropdown-item rounded-2 py-2" href="{{ url_for('admin.dashboard') }}"><i class="fa-solid fa-gauge me-2 text-muted"></i> Admin Dashboard</a></li>
+                  <li><a class="dropdown-item rounded-2 py-2" href="{{ url_for('admin.seats_manage') }}"><i class="fa-solid fa-chair me-2 text-muted"></i> Seat Reservation Manager</a></li>
+                  <li><a class="dropdown-item rounded-2 py-2" href="{{ url_for('admin.feedback_analytics') }}"><i class="fa-solid fa-comments me-2 text-muted"></i> Feedback NLP Analytics</a></li>
+                  <li><a class="dropdown-item rounded-2 py-2" href="{{ url_for('admin.users_manage') }}"><i class="fa-solid fa-users me-2 text-muted"></i> Manage Users</a></li>
                   <li><a class="dropdown-item rounded-2 py-2" href="{{ url_for('admin.reports') }}"><i class="fa-solid fa-file-pdf me-2 text-muted"></i> Export Reports</a></li>
                 {% endif %}
                 <li><hr class="dropdown-divider"></li>
