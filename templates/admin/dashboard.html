@@ -10,9 +10,15 @@
       <h3 class="fw-bold mb-0"><i class="fa-solid fa-gauge-high text-danger me-2"></i> Executive Admin Dashboard</h3>
       <p class="text-muted small mb-0">Real-time overview of canteen sales, kitchen orders, inventory alerts & AI predictions</p>
     </div>
-    <div class="d-flex gap-2">
+    <div class="d-flex gap-2 flex-wrap">
       <a href="{{ url_for('admin.ai_control_center') }}" class="btn btn-warning rounded-pill px-3 fw-bold">
         <i class="fa-solid fa-wand-magic-sparkles me-1"></i> AI Control Center
+      </a>
+      <a href="{{ url_for('admin.seats_manage') }}" class="btn btn-outline-dark rounded-pill px-3 fw-semibold">
+        <i class="fa-solid fa-chair me-1 text-danger"></i> Seat Manager
+      </a>
+      <a href="{{ url_for('admin.feedback_analytics') }}" class="btn btn-outline-dark rounded-pill px-3 fw-semibold">
+        <i class="fa-solid fa-comments me-1 text-primary"></i> Feedback NLP
       </a>
       <a href="{{ url_for('admin.reports') }}" class="btn btn-dark rounded-pill px-3">
         <i class="fa-solid fa-file-pdf me-1"></i> Reports
