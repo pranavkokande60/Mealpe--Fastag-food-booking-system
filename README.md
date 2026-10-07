@@ -34,17 +34,6 @@ An enterprise-grade, modern, AI-powered Smart Canteen Management Platform design
 - **AI Daily Prep Guide:** Pre-preparation portion forecasting for each dish to minimize student waiting queues during peak intervals.
 - **Quick Stock & Availability Toggle:** 1-click counter toggle to adjust item stock and immediately prevent student over-ordering.
 
-### 4. 🗄️ Database Management & Developer CLI Tools
-- **Interactive SQL Shell (`sql_shell.py`):** Built-in terminal console to execute live SQL queries (`SELECT`, `DESCRIBE`, `tables`) directly from VS Code / PowerShell.
-- **Visual Table Inspector (`view_db.py`):** Fast CLI tool to view table row counts and inspect live records for `orders`, `food_items`, `users`, `seat_bookings`, and `inventory`.
-- **Automated pgAdmin Connector (`setup_postgres.py`):** Interactive 1-step connector script to verify PostgreSQL credentials and configure `.env`.
-- **All-in-One pgAdmin Script (`smart_canteen_pgadmin_all_in_one.sql`):** Single-click SQL script containing complete PostgreSQL schemas, indexes, sequences, and seed records.
-
-### 5. 📄 Academic Research Paper (IEEE Conference Format)
-- **Publication-Ready Manuscript:** Included directly in [`Research_Paper_Smart_Canteen.md`](Research_Paper_Smart_Canteen.md) and formatted Microsoft Word [`Research_Paper_Smart_Canteen.docx`](Research_Paper_Smart_Canteen.docx).
-- **Structure:** IEEE Conference layout complete with mathematical formulations ($R^2 = 0.912$, $\text{MAE} = 2.14$), 4-Tier system architecture diagrams, relational ER schemas, confusion matrices, and 12 formal IEEE citations.
-- **Future Work Design:** Novel Late-Stage Order Cancellation protocol with 80% partial refund and Peer-to-Peer Surplus Meal Redistribution marketplace ("Ready-to-Grab" flash counter).
-
 ---
 
 ## 🛠️ Technology Stack
