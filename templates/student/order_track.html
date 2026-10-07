@@ -93,8 +93,8 @@
           {% endif %}
 
           {% if order.order_status in ['PLACED', 'ACCEPTED'] %}
-            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#cancelOrderModal">
-              <i class="fa-solid fa-ban text-danger me-1"></i> Cancel Order
+            <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#cancelOrderModal">
+              <i class="fa-solid fa-ban me-1"></i> Cancel Order & Refund
             </button>
           {% endif %}
         </div>

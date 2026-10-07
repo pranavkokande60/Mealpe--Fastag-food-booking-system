@@ -52,9 +52,19 @@
             <small class="text-muted">Status: <b class="text-danger">{{ active_orders[0].order_status }}</b> • Est. Ready: {{ active_orders[0].pickup_time or 'Soon' }}</small>
           </div>
         </div>
-        <a href="{{ url_for('student.order_track', order_id=active_orders[0].id) }}" class="btn btn-brand rounded-pill px-4 btn-sm">
-          Live Tracker <i class="fa-solid fa-arrow-right ms-1"></i>
-        </a>
+        <div class="d-flex gap-2 align-items-center">
+          {% if active_orders[0].order_status in ['PLACED', 'ACCEPTED'] %}
+            <form action="{{ url_for('student.cancel_order', order_id=active_orders[0].id) }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel order #{{ active_orders[0].order_number }}? The full amount will be refunded to your dining wallet.')">
+              <input type="hidden" name="redirect_to" value="dashboard">
+              <button type="submit" class="btn btn-outline-danger rounded-pill px-3 btn-sm fw-semibold">
+                <i class="fa-solid fa-ban me-1"></i> Cancel Order
+              </button>
+            </form>
+          {% endif %}
+          <a href="{{ url_for('student.order_track', order_id=active_orders[0].id) }}" class="btn btn-brand rounded-pill px-4 btn-sm">
+            Live Tracker <i class="fa-solid fa-arrow-right ms-1"></i>
+          </a>
+        </div>
       </div>
     </div>
   {% endif %}

@@ -223,7 +223,9 @@ def cancel_order(order_id):
         flash(str(e), 'danger')
 
     redirect_to = request.form.get('redirect_to')
-    if redirect_to == 'history':
+    if redirect_to == 'dashboard':
+        return redirect(url_for('student.dashboard'))
+    elif redirect_to == 'history':
         return redirect(url_for('student.order_history'))
     return redirect(url_for('student.order_track', order_id=order_id))
 
