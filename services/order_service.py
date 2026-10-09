@@ -234,8 +234,8 @@ class OrderService:
         is_paid = (order['payment_status'] == 'PAID')
 
         if is_paid:
-            cancellation_fee = round(final_amount * 0.10, 2)
-            refund_amount = round(final_amount * 0.90, 2)
+            cancellation_fee = round(final_amount * 0.20, 2)
+            refund_amount = round(final_amount * 0.80, 2)
         else:
             cancellation_fee = 0.00
             refund_amount = 0.00

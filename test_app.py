@@ -137,7 +137,7 @@ class SmartCanteenSystemTests(unittest.TestCase):
         self.assertGreater(admin_pdf.getbuffer().nbytes, 1000)
 
     def test_12_student_order_cancellation_and_refund_policy(self):
-        """Test student order cancellation with 90% refund, 10% cancellation fee, and stock restoration in PLACED state"""
+        """Test student order cancellation with 80% refund, 20% cancellation fee, and stock restoration in PLACED state"""
         student_id = 6
         initial_user = query_db("SELECT wallet_balance FROM users WHERE id = %s", (student_id,), one=True)
         initial_balance = float(initial_user['wallet_balance'])
@@ -155,8 +155,8 @@ class SmartCanteenSystemTests(unittest.TestCase):
         )
         order_id = order_res['order_id']
         final_paid = float(order_res['final_amount'])
-        expected_refund = round(final_paid * 0.90, 2)
-        expected_fee = round(final_paid * 0.10, 2)
+        expected_refund = round(final_paid * 0.80, 2)
+        expected_fee = round(final_paid * 0.20, 2)
 
         # Check stock decremented
         food_after = query_db("SELECT stock_quantity FROM food_items WHERE id = 1", one=True)
@@ -239,8 +239,8 @@ class SmartCanteenSystemTests(unittest.TestCase):
             reason='Emergency class'
         )
         self.assertTrue(cancel_res['success'])
-        self.assertAlmostEqual(cancel_res['refund_amount'], round(paid_amount * 0.90, 2), places=2)
-        self.assertAlmostEqual(cancel_res['cancellation_fee'], round(paid_amount * 0.10, 2), places=2)
+        self.assertAlmostEqual(cancel_res['refund_amount'], round(paid_amount * 0.80, 2), places=2)
+        self.assertAlmostEqual(cancel_res['cancellation_fee'], round(paid_amount * 0.20, 2), places=2)
 
         # 3. Verify Food Rescue Offer was created
         offers = query_db("SELECT * FROM food_rescue_offers WHERE original_order_id = %s", (order_id,)) or []

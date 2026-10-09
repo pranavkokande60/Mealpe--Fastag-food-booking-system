@@ -221,7 +221,7 @@ def cancel_order(order_id):
         )
         if res.get('refund_amount', 0) > 0:
             session['wallet_balance'] = res['new_wallet_balance']
-            flash(f"Order #{res['order_number']} has been cancelled. ₹{res['refund_amount']:.2f} (90% refund) credited back to your dining wallet!", 'success')
+            flash(f"Order #{res['order_number']} has been cancelled. ₹{res['refund_amount']:.2f} (80% refund) credited back to your dining wallet!", 'success')
         else:
             flash(f"Order #{res['order_number']} has been cancelled successfully.", 'info')
     except Exception as e:
