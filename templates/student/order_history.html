@@ -41,7 +41,7 @@
               </div>
               <div class="d-flex gap-2">
                 {% if o.order_status in ['PLACED', 'ACCEPTED', 'PREPARING', 'READY'] %}
-                  <form action="{{ url_for('student.cancel_order', order_id=o.id) }}" method="POST" onsubmit="return confirm('Cancel Order #{{ o.order_number }}?\n\nEligible Refund (90%): ₹{{ '%.2f'|format(o.final_amount * 0.90) }}\nCancellation Fee (10%): ₹{{ '%.2f'|format(o.final_amount * 0.10) }}\n\nRefund will be instantly credited to your Dining Wallet.')">
+                  <form action="{{ url_for('student.cancel_order', order_id=o.id) }}" method="POST" onsubmit="return confirm('Cancel Order #{{ o.order_number }}?\n\nEligible Refund (90%): ₹{{ '%.2f'|format(o.final_amount|float * 0.90) }}\nCancellation Fee (10%): ₹{{ '%.2f'|format(o.final_amount|float * 0.10) }}\n\nRefund will be instantly credited to your Dining Wallet.')">
                     <input type="hidden" name="redirect_to" value="history">
                     <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-semibold">
                       <i class="fa-solid fa-ban me-1"></i> Cancel (90% Refund)
