@@ -53,11 +53,11 @@
           </div>
         </div>
         <div class="d-flex gap-2 align-items-center">
-          {% if active_orders[0].order_status in ['PLACED', 'ACCEPTED'] %}
-            <form action="{{ url_for('student.cancel_order', order_id=active_orders[0].id) }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel order #{{ active_orders[0].order_number }}? The full amount will be refunded to your dining wallet.')">
+          {% if active_orders[0].order_status in ['PLACED', 'ACCEPTED', 'PREPARING', 'READY'] %}
+            <form action="{{ url_for('student.cancel_order', order_id=active_orders[0].id) }}" method="POST" onsubmit="return confirm('Cancel Order #{{ active_orders[0].order_number }}?\n\nEligible Refund (90%): ₹{{ '%.2f'|format(active_orders[0].final_amount * 0.90) }}\nCancellation Fee (10%): ₹{{ '%.2f'|format(active_orders[0].final_amount * 0.10) }}\n\nRefund will be instantly credited to your Dining Wallet.')">
               <input type="hidden" name="redirect_to" value="dashboard">
               <button type="submit" class="btn btn-outline-danger rounded-pill px-3 btn-sm fw-semibold">
-                <i class="fa-solid fa-ban me-1"></i> Cancel Order
+                <i class="fa-solid fa-ban me-1"></i> Cancel (90% Refund)
               </button>
             </form>
           {% endif %}
@@ -108,6 +108,130 @@
           <span>{{ cat.name }}</span>
         </a>
       {% endfor %}
+    </div>
+  </div>
+
+  <!-- ⚡ Smart Food Rescue Counter (Anti-Food-Waste Deals) -->
+  <div id="food-rescue" class="mb-5">
+    <div class="card border-0 shadow-sm rounded-4 p-4" style="background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); border: 1px solid #fed7aa !important;">
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+          <div class="badge bg-danger text-white px-3 py-1 rounded-pill mb-1 fw-bold shadow-sm">
+            <i class="fa-solid fa-bolt me-1"></i> Real-Time Food Rescue Deals
+          </div>
+          <h4 class="fw-bold mb-0 text-dark">
+            ⚡ Save Food, Save Money (Flat 10% OFF)
+          </h4>
+          <p class="text-muted small mb-0">Freshly prepared meals ready for instant pickup! Grab them before they expire and prevent campus food waste.</p>
+        </div>
+        <span class="badge bg-danger rounded-pill px-3 py-2 fw-bold animate__animated animate__pulse animate__infinite">
+          <i class="fa-solid fa-clock me-1"></i> Live Counter
+        </span>
+      </div>
+
+      <div id="rescue-deals-container" class="row g-3">
+        {% if rescue_offers %}
+          {% for ro in rescue_offers %}
+            <div class="col-lg-4 col-md-6 rescue-card-col" data-offer-id="{{ ro.id }}">
+              <div class="card border-0 shadow-sm rounded-4 h-100 bg-white overflow-hidden position-relative">
+                <div class="position-relative">
+                  <img src="{{ ro.image_url }}" class="w-100" style="height: 170px; object-fit: cover;" alt="{{ ro.food_name }}">
+                  <span class="position-absolute top-0 start-0 m-2 badge bg-danger rounded-pill px-2 py-1 shadow-sm">
+                    ⚡ {{ ro.discount_percent }}% OFF
+                  </span>
+                  <span class="position-absolute top-0 end-0 m-2 badge bg-dark bg-opacity-75 text-white rounded-pill px-2 py-1 small">
+                    <i class="fa-solid fa-stopwatch me-1 text-warning"></i> {{ ro.time_remaining_str }}
+                  </span>
+                  <span class="position-absolute bottom-0 start-0 m-2 badge bg-white text-dark shadow-sm rounded-pill px-2 py-1 small fw-bold">
+                    <span class="{{ 'indicator-veg' if ro.is_veg else 'indicator-nonveg' }} me-1"></span>{{ ro.quantity_available }} portion{{ 's' if ro.quantity_available > 1 else '' }} left
+                  </span>
+                </div>
+                <div class="p-3 d-flex flex-column justify-content-between flex-grow-1">
+                  <div>
+                    <h6 class="fw-bold mb-1 text-dark">{{ ro.food_name }}</h6>
+                    <p class="text-muted small mb-2 text-truncate" style="max-height: 38px;">{{ ro.description or 'Freshly prepared meal ready for instant pickup' }}</p>
+                    <div class="small text-muted mb-2">
+                      <i class="fa-solid fa-location-dot text-danger me-1"></i> <span class="fw-semibold">{{ ro.collection_point }}</span>
+                    </div>
+                  </div>
+                  <div class="d-flex align-items-center justify-content-between pt-2 border-top">
+                    <div>
+                      <div class="small text-muted text-decoration-line-through">₹{{ "%.2f"|format(ro.original_price) }}</div>
+                      <div class="h5 fw-bold text-danger mb-0">₹{{ "%.2f"|format(ro.rescue_price) }}</div>
+                    </div>
+                    <button type="button" class="btn btn-danger btn-sm rounded-pill px-3 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#rescueBuyModal{{ ro.id }}">
+                      <i class="fa-solid fa-bolt me-1"></i> Buy Now
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Modal for Rescue Buy -->
+            <div class="modal fade" id="rescueBuyModal{{ ro.id }}" tabindex="-1" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content rounded-4 border-0 shadow">
+                  <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold text-danger">
+                      <i class="fa-solid fa-bolt me-1"></i> Instant Food Rescue Deal
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <form action="{{ url_for('student.buy_rescue_offer', offer_id=ro.id) }}" method="POST">
+                    <div class="modal-body py-3">
+                      <div class="d-flex align-items-center gap-3 p-3 bg-light rounded-3 mb-3 border">
+                        <img src="{{ ro.image_url }}" width="60" height="60" class="rounded-3" style="object-fit: cover;">
+                        <div>
+                          <h6 class="fw-bold mb-0">{{ ro.food_name }}</h6>
+                          <div class="text-danger fw-bold fs-5">₹{{ "%.2f"|format(ro.rescue_price) }} <small class="text-muted fs-6 text-decoration-line-through">₹{{ "%.2f"|format(ro.original_price) }}</small></div>
+                          <small class="text-success fw-semibold"><i class="fa-solid fa-shield-heart me-1"></i> You save ₹{{ "%.2f"|format(ro.savings_amount) }} and prevent food waste!</small>
+                        </div>
+                      </div>
+
+                      <div class="mb-3">
+                        <label class="form-label small fw-semibold text-muted">Pickup Location</label>
+                        <div class="form-control bg-light small fw-bold"><i class="fa-solid fa-location-dot text-danger me-1"></i> {{ ro.collection_point }}</div>
+                      </div>
+
+                      <div class="mb-3">
+                        <label class="form-label small fw-semibold text-muted">Payment Method</label>
+                        <div class="d-flex gap-2">
+                          <label class="btn btn-outline-danger btn-sm rounded-3 flex-fill text-start p-2">
+                            <input type="radio" name="payment_method" value="wallet" checked class="form-check-input me-1">
+                            <b>Dining Wallet</b> (Bal: ₹{{ "%.2f"|format(user.wallet_balance) }})
+                          </label>
+                          <label class="btn btn-outline-secondary btn-sm rounded-3 flex-fill text-start p-2">
+                            <input type="radio" name="payment_method" value="cash" class="form-check-input me-1">
+                            <b>Cash on Pickup</b>
+                          </label>
+                        </div>
+                      </div>
+
+                      <div class="alert alert-info py-2 px-3 small rounded-3 mb-0">
+                        <i class="fa-solid fa-circle-info me-1"></i> You will receive a unique <b>4-Digit Collection PIN</b> immediately to show at the counter for pickup.
+                      </div>
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
+                      <button type="button" class="btn btn-light rounded-pill px-4 btn-sm" data-bs-dismiss="modal">Cancel</button>
+                      <button type="submit" class="btn btn-danger rounded-pill px-4 btn-sm fw-bold">
+                        <i class="fa-solid fa-check me-1"></i> Confirm & Pay ₹{{ "%.2f"|format(ro.rescue_price) }}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="col-12" id="rescue-empty-state">
+            <div class="text-center py-4 bg-white rounded-4 border border-dashed p-4">
+              <i class="fa-solid fa-leaf fa-2x text-success mb-2"></i>
+              <h6 class="fw-bold mb-1">Zero Food Waste Right Now! 🌱</h6>
+              <p class="text-muted small mb-0">All kitchen meals are claimed and on schedule. Check back anytime for instant discounted rescue deals!</p>
+            </div>
+          </div>
+        {% endif %}
+      </div>
     </div>
   </div>
 

@@ -91,6 +91,66 @@
 
   </div>
 
+  <!-- 🌱 Smart Food Rescue & Sustainability Impact Row -->
+  <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4" style="border-left: 6px solid #16a34a !important;">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+      <div>
+        <div class="badge bg-success-subtle text-success px-3 py-1 rounded-pill mb-1 fw-bold">
+          <i class="fa-solid fa-leaf me-1"></i> Smart Food Rescue & Anti-Waste Engine
+        </div>
+        <h5 class="fw-bold mb-0">Campus Food Waste Prevention & Resale Analytics</h5>
+      </div>
+      <span class="badge bg-success rounded-pill px-3 py-2 fw-semibold">
+        <i class="fa-solid fa-shield-halved me-1"></i> FSSAI Waste Reduction Policy
+      </span>
+    </div>
+
+    <div class="row g-3 text-center">
+      <div class="col-xl-2 col-md-4 col-6">
+        <div class="p-3 bg-light rounded-3 border">
+          <div class="text-muted small">Meals Rescued</div>
+          <h4 class="fw-bold text-success mb-0">{{ rescue_kpis.total_meals_resold }}</h4>
+          <small class="text-muted">{{ rescue_kpis.total_offers_created }} offers created</small>
+        </div>
+      </div>
+      <div class="col-xl-2 col-md-4 col-6">
+        <div class="p-3 bg-light rounded-3 border">
+          <div class="text-muted small">Waste Prevented</div>
+          <h4 class="fw-bold text-success mb-0">{{ rescue_kpis.food_waste_saved_kg }} kg</h4>
+          <small class="text-muted">Landfill avoided</small>
+        </div>
+      </div>
+      <div class="col-xl-2 col-md-4 col-6">
+        <div class="p-3 bg-light rounded-3 border">
+          <div class="text-muted small">Food Value Saved</div>
+          <h4 class="fw-bold text-dark mb-0">₹{{ "%.2f"|format(rescue_kpis.food_waste_saved_valuation) }}</h4>
+          <small class="text-muted">Direct dish value</small>
+        </div>
+      </div>
+      <div class="col-xl-2 col-md-4 col-6">
+        <div class="p-3 bg-light rounded-3 border">
+          <div class="text-muted small">Rescue Revenue</div>
+          <h4 class="fw-bold text-primary mb-0">₹{{ "%.2f"|format(rescue_kpis.total_rescue_revenue) }}</h4>
+          <small class="text-muted">Resale proceeds</small>
+        </div>
+      </div>
+      <div class="col-xl-2 col-md-4 col-6">
+        <div class="p-3 bg-light rounded-3 border">
+          <div class="text-muted small">Cancellation Fees (10%)</div>
+          <h4 class="fw-bold text-danger mb-0">₹{{ "%.2f"|format(rescue_kpis.total_cancellation_fees) }}</h4>
+          <small class="text-muted">Retained policy fees</small>
+        </div>
+      </div>
+      <div class="col-xl-2 col-md-4 col-6">
+        <div class="p-3 bg-light rounded-3 border">
+          <div class="text-muted small">Refunds Issued (90%)</div>
+          <h4 class="fw-bold text-info mb-0">₹{{ "%.2f"|format(rescue_kpis.total_refunds_issued) }}</h4>
+          <small class="text-muted">To student wallets</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Charts Row -->
   <div class="row g-4 mb-4">
     <!-- Revenue Line Chart -->

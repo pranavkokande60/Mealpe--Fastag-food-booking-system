@@ -83,6 +83,10 @@ def dashboard():
         ORDER BY o.created_at DESC LIMIT 8
     """) or []
 
+    # 5. Food Rescue & Waste Prevention KPIs
+    from services.rescue_service import rescue_service
+    rescue_kpis = rescue_service.get_rescue_kpis()
+
     return render_template(
         'admin/dashboard.html',
         total_students=total_students,
@@ -96,7 +100,8 @@ def dashboard():
         rev_chart=rev_chart,
         cat_sales=cat_sales,
         top_foods=top_foods,
-        recent_orders=recent_orders
+        recent_orders=recent_orders,
+        rescue_kpis=rescue_kpis
     )
 
 @admin_bp.route('/ai-control-center')
@@ -122,6 +127,10 @@ def ai_control_center():
     # 4. Inventory Alerts
     inv_data = inventory_service.get_all_inventory_with_ai_insights()
 
+    # 5. Food Rescue Impact KPIs
+    from services.rescue_service import rescue_service
+    rescue_kpis = rescue_service.get_rescue_kpis()
+
     # AI High-Level Strategic Decisions
     top_demanded_item = demand_predictions[0] if demand_predictions else None
     
@@ -134,6 +143,7 @@ def ai_control_center():
         crowd_schedule=crowd_schedule,
         waste_analysis=waste_analysis,
         inv_data=inv_data,
+        rescue_kpis=rescue_kpis,
         top_demanded_item=top_demanded_item
     )
 

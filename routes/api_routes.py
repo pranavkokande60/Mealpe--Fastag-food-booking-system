@@ -128,7 +128,7 @@ def kitchen_live_orders():
     """Returns live JSON list of active kitchen orders for KDS polling"""
     orders = query_db("""
         SELECT o.id, o.order_number, o.order_status, o.created_at, o.estimated_prep_time,
-               o.special_instructions, u.name as student_name,
+               o.special_instructions, o.is_rescue_order, o.collection_pin, u.name as student_name,
                GROUP_CONCAT(CONCAT(oi.quantity, 'x ', f.name) SEPARATOR ', ') as items_summary
         FROM orders o
         JOIN users u ON o.student_id = u.id
@@ -139,3 +139,50 @@ def kitchen_live_orders():
         ORDER BY o.created_at ASC
     """) or []
     return jsonify({"orders": orders})
+
+@api_bp.route('/rescue/active-offers')
+def get_active_rescue_offers():
+    """Returns real-time list of active, non-expired Food Rescue deals for student dashboard polling"""
+    from services.rescue_service import rescue_service
+    offers = rescue_service.get_active_offers()
+    return jsonify({
+        "success": True,
+        "count": len(offers),
+        "offers": offers
+    })
+
+@api_bp.route('/rescue/buy', methods=['POST'])
+def purchase_rescue_offer_api():
+    """API endpoint to atomically purchase a Food Rescue meal"""
+    from services.rescue_service import rescue_service
+
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({"success": False, "error": "Please log in to purchase rescue meals."}), 401
+
+    data = request.get_json() or {}
+    offer_id = data.get('offer_id') or request.form.get('offer_id', type=int)
+    quantity = int(data.get('quantity') or request.form.get('quantity', 1) or 1)
+    payment_method = (data.get('payment_method') or request.form.get('payment_method', 'wallet')).lower()
+
+    if not offer_id:
+        return jsonify({"success": False, "error": "Offer ID is required."}), 400
+
+    try:
+        res = rescue_service.purchase_rescue_offer(
+            offer_id=int(offer_id),
+            buyer_student_id=user_id,
+            quantity=quantity,
+            payment_method=payment_method
+        )
+        session['wallet_balance'] = res['new_wallet_balance']
+        return jsonify(res)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+
+@api_bp.route('/rescue/stats')
+def get_rescue_stats_api():
+    """Returns environmental impact and financial statistics for Food Rescue"""
+    from services.rescue_service import rescue_service
+    stats = rescue_service.get_rescue_kpis()
+    return jsonify({"success": True, "stats": stats})

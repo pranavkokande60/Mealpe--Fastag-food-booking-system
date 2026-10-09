@@ -136,14 +136,15 @@ class SmartCanteenSystemTests(unittest.TestCase):
         admin_pdf = pdf_service.generate_admin_report_pdf('sales')
         self.assertGreater(admin_pdf.getbuffer().nbytes, 1000)
 
-    def test_12_student_order_cancellation(self):
-        """Test student order cancellation, wallet refund, stock restoration, and cancellation lock"""
+    def test_12_student_order_cancellation_and_refund_policy(self):
+        """Test student order cancellation with 90% refund, 10% cancellation fee, and stock restoration in PLACED state"""
         student_id = 6
         initial_user = query_db("SELECT wallet_balance FROM users WHERE id = %s", (student_id,), one=True)
         initial_balance = float(initial_user['wallet_balance'])
 
-        food = query_db("SELECT id, stock_quantity FROM food_items WHERE id = 1", one=True)
+        food = query_db("SELECT id, price, stock_quantity FROM food_items WHERE id = 1", one=True)
         initial_stock = int(food['stock_quantity'])
+        item_price = float(food['price'])
 
         # 1. Place an order with UPI / Paid status
         cart_items = [{"id": 1, "quantity": 2}]
@@ -153,7 +154,9 @@ class SmartCanteenSystemTests(unittest.TestCase):
             payment_method='upi'
         )
         order_id = order_res['order_id']
-        refund_expected = float(order_res['final_amount'])
+        final_paid = float(order_res['final_amount'])
+        expected_refund = round(final_paid * 0.90, 2)
+        expected_fee = round(final_paid * 0.10, 2)
 
         # Check stock decremented
         food_after = query_db("SELECT stock_quantity FROM food_items WHERE id = 1", one=True)
@@ -167,29 +170,20 @@ class SmartCanteenSystemTests(unittest.TestCase):
             reason='Changed my mind'
         )
         self.assertTrue(cancel_res['success'])
-        self.assertEqual(cancel_res['refund_amount'], refund_expected)
+        self.assertAlmostEqual(cancel_res['refund_amount'], expected_refund, places=2)
+        self.assertAlmostEqual(cancel_res['cancellation_fee'], expected_fee, places=2)
 
-        # Check stock restored
+        # Check stock restored for PLACED order
         food_restored = query_db("SELECT stock_quantity FROM food_items WHERE id = 1", one=True)
         self.assertEqual(int(food_restored['stock_quantity']), initial_stock)
 
-        # Check wallet refunded
+        # Check wallet refunded 90%
         user_after = query_db("SELECT wallet_balance FROM users WHERE id = %s", (student_id,), one=True)
-        self.assertAlmostEqual(float(user_after['wallet_balance']), initial_balance + refund_expected, places=2)
+        self.assertAlmostEqual(float(user_after['wallet_balance']), initial_balance + expected_refund, places=2)
 
         # 3. Check cannot cancel twice
         with self.assertRaises(ValueError):
             order_service.cancel_order(order_id=order_id, user_id=student_id, role='student')
-
-        # 4. Check cannot cancel when order is in PREPARING / READY / COMPLETED state
-        order_res2 = order_service.place_order(
-            student_id=student_id,
-            cart_items=[{"id": 1, "quantity": 1}],
-            payment_method='cash_on_pickup'
-        )
-        order_service.update_order_status(order_res2['order_id'], 'PREPARING')
-        with self.assertRaises(ValueError):
-            order_service.cancel_order(order_id=order_res2['order_id'], user_id=student_id, role='student')
 
     def test_13_table_booking_cancellation(self):
         """Test table booking cancellation, freeing slot, and re-booking"""
@@ -214,6 +208,108 @@ class SmartCanteenSystemTests(unittest.TestCase):
         # 3. Another student can now book the same table and slot without conflict
         res_new = seat_service.book_seat(student_id=7, table_id=2, booking_date=target_date, time_slot=target_slot, guests_count=2)
         self.assertIn('booking_code', res_new)
+
+    def test_14_smart_food_rescue_creation_and_purchase(self):
+        """Test cancellation during PREPARING automatically creates Food Rescue deal, which another student purchases atomically"""
+        from services.rescue_service import rescue_service
+
+        student_1_id = 6
+        student_2_id = 7
+
+        # Ensure student 2 has sufficient wallet balance for purchase
+        execute_db("UPDATE users SET wallet_balance = 500.00 WHERE id = %s", (student_2_id,))
+
+        # 1. Student 1 places an order
+        order_res = order_service.place_order(
+            student_id=student_1_id,
+            cart_items=[{"id": 1, "quantity": 1}], # Masala Dosa (e.g. ₹60)
+            payment_method='wallet'
+        )
+        order_id = order_res['order_id']
+        paid_amount = float(order_res['final_amount'])
+
+        # Kitchen starts cooking -> status PREPARING
+        order_service.update_order_status(order_id, 'PREPARING')
+
+        # 2. Student 1 cancels order while PREPARING
+        cancel_res = order_service.cancel_order(
+            order_id=order_id,
+            user_id=student_1_id,
+            role='student',
+            reason='Emergency class'
+        )
+        self.assertTrue(cancel_res['success'])
+        self.assertAlmostEqual(cancel_res['refund_amount'], round(paid_amount * 0.90, 2), places=2)
+        self.assertAlmostEqual(cancel_res['cancellation_fee'], round(paid_amount * 0.10, 2), places=2)
+
+        # 3. Verify Food Rescue Offer was created
+        offers = query_db("SELECT * FROM food_rescue_offers WHERE original_order_id = %s", (order_id,)) or []
+        self.assertEqual(len(offers), 1)
+        rescue_offer = offers[0]
+        self.assertEqual(rescue_offer['offer_status'], 'AVAILABLE')
+        self.assertEqual(rescue_offer['quantity_available'], 1)
+        self.assertEqual(rescue_offer['discount_percent'], 10)
+        expected_rescue_price = round(float(rescue_offer['original_price']) * 0.90, 2)
+        self.assertAlmostEqual(float(rescue_offer['rescue_price']), expected_rescue_price, places=2)
+
+        # 4. Student 2 purchases the Food Rescue Offer
+        buy_res = rescue_service.purchase_rescue_offer(
+            offer_id=rescue_offer['id'],
+            buyer_student_id=student_2_id,
+            quantity=1,
+            payment_method='wallet'
+        )
+        self.assertTrue(buy_res['success'])
+        self.assertIn('collection_pin', buy_res)
+        self.assertEqual(len(buy_res['collection_pin']), 4)
+        new_order_id = buy_res['order_id']
+
+        # 5. Verify the new order in DB
+        resold_order = query_db("SELECT * FROM orders WHERE id = %s", (new_order_id,), one=True)
+        self.assertEqual(resold_order['student_id'], student_2_id)
+        self.assertEqual(resold_order['is_rescue_order'], 1)
+        self.assertEqual(resold_order['collection_pin'], buy_res['collection_pin'])
+        self.assertEqual(resold_order['order_status'], 'READY')
+
+        # 6. Verify offer is now marked CLAIMED with 0 available
+        claimed_offer = query_db("SELECT * FROM food_rescue_offers WHERE id = %s", (rescue_offer['id'],), one=True)
+        self.assertEqual(claimed_offer['offer_status'], 'CLAIMED')
+        self.assertEqual(claimed_offer['quantity_available'], 0)
+        self.assertEqual(claimed_offer['quantity_claimed'], 1)
+
+        # 7. Attempting to purchase the claimed offer again must fail (concurrency protection)
+        with self.assertRaises(ValueError):
+            rescue_service.purchase_rescue_offer(
+                offer_id=rescue_offer['id'],
+                buyer_student_id=8,
+                quantity=1,
+                payment_method='wallet'
+            )
+
+    def test_15_rescue_apis_and_admin_kpis(self):
+        """Test REST API endpoints and Admin Food Rescue KPIs"""
+        from services.rescue_service import rescue_service
+
+        # Test API: get active rescue offers
+        res = self.client.get('/api/rescue/active-offers')
+        self.assertEqual(res.status_code, 200)
+        data = json.loads(res.data)
+        self.assertTrue(data['success'])
+        self.assertIn('offers', data)
+
+        # Test API: get rescue stats
+        res_stats = self.client.get('/api/rescue/stats')
+        self.assertEqual(res_stats.status_code, 200)
+        data_stats = json.loads(res_stats.data)
+        self.assertTrue(data_stats['success'])
+        self.assertIn('food_waste_saved_kg', data_stats['stats'])
+        self.assertIn('total_cancellation_fees', data_stats['stats'])
+        self.assertIn('total_refunds_issued', data_stats['stats'])
+
+        # Direct KPI service test
+        kpis = rescue_service.get_rescue_kpis()
+        self.assertIsInstance(kpis['food_waste_saved_kg'], float)
+        self.assertGreaterEqual(kpis['total_meals_resold'], 0)
 
 if __name__ == '__main__':
     unittest.main()

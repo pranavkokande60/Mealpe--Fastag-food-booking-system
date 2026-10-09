@@ -80,6 +80,13 @@ def setup_sqlite_tables(conn):
         estimated_prep_time INTEGER NOT NULL DEFAULT 15,
         pickup_time TEXT,
         special_instructions TEXT,
+        cancellation_fee REAL DEFAULT 0.00,
+        refund_amount REAL DEFAULT 0.00,
+        cancellation_reason TEXT,
+        cancelled_at TEXT,
+        is_rescue_order INTEGER DEFAULT 0,
+        rescue_offer_id INTEGER,
+        collection_pin TEXT,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE
@@ -197,6 +204,26 @@ def setup_sqlite_tables(conn):
         payload_json TEXT NOT NULL,
         explanation TEXT,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS food_rescue_offers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        original_order_id INTEGER NOT NULL,
+        original_student_id INTEGER NOT NULL,
+        food_id INTEGER NOT NULL,
+        food_name TEXT,
+        quantity_available INTEGER NOT NULL DEFAULT 1,
+        quantity_claimed INTEGER NOT NULL DEFAULT 0,
+        original_price REAL NOT NULL,
+        rescue_price REAL NOT NULL,
+        discount_percent INTEGER DEFAULT 10,
+        offer_status TEXT DEFAULT 'AVAILABLE',
+        collection_point TEXT DEFAULT 'College Canteen Central Counter',
+        expires_at TEXT NOT NULL,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (original_order_id) REFERENCES orders(id) ON DELETE CASCADE,
+        FOREIGN KEY (original_student_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (food_id) REFERENCES food_items(id) ON DELETE CASCADE
     );
     """
     cur = conn.cursor()

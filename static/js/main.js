@@ -186,13 +186,111 @@ class CartManager {
   }
 }
 
+// Real-Time Smart Food Rescue Notification & Deals Poller
+class FoodRescueNotifier {
+  constructor() {
+    this.seenOfferIds = new Set();
+    this.isFirstRun = true;
+    this.init();
+  }
+
+  init() {
+    this.checkOffers();
+    // Poll for new food rescue offers every 5 seconds
+    setInterval(() => this.checkOffers(), 5000);
+  }
+
+  checkOffers() {
+    fetch('/api/rescue/active-offers')
+      .then(res => res.json())
+      .then(data => {
+        if (!data.success || !data.offers) return;
+
+        const currentOffers = data.offers;
+        
+        if (this.isFirstRun) {
+          // Initialize seen offers on page load so we don't spam alerts for existing ones
+          currentOffers.forEach(o => this.seenOfferIds.add(o.id));
+          this.isFirstRun = false;
+          return;
+        }
+
+        currentOffers.forEach(offer => {
+          if (!this.seenOfferIds.has(offer.id)) {
+            this.seenOfferIds.add(offer.id);
+            this.triggerRescueAlert(offer);
+          }
+        });
+      })
+      .catch(() => {});
+  }
+
+  triggerRescueAlert(offer) {
+    const toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) return;
+
+    const alertCard = document.createElement('div');
+    alertCard.className = 'card border-danger shadow-lg rounded-4 p-3 mb-2 animate__animated animate__bounceIn';
+    alertCard.style.cssText = 'min-width: 320px; max-width: 400px; border-left: 6px solid #dc3545 !important; background: #ffffff;';
+
+    const origPrice = parseFloat(offer.original_price).toFixed(2);
+    const rescuePrice = parseFloat(offer.rescue_price).toFixed(2);
+
+    alertCard.innerHTML = `
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <span class="badge bg-danger text-white rounded-pill px-2 py-1 fw-bold">
+          <i class="fa-solid fa-bolt me-1"></i> FOOD RESCUE ALERT!
+        </span>
+        <button type="button" class="btn-close btn-sm" aria-label="Close"></button>
+      </div>
+      <div class="fw-bold text-dark small mb-2">A fresh meal is available and may go to waste!</div>
+      <div class="d-flex align-items-center gap-3 bg-light p-2 rounded-3 mb-2 border">
+        <img src="${offer.image_url}" width="48" height="48" class="rounded-3" style="object-fit: cover;">
+        <div class="flex-grow-1">
+          <div class="fw-bold small text-dark">${offer.food_name}</div>
+          <div class="small">
+            <del class="text-muted">₹${origPrice}</del> 
+            <b class="text-danger ms-1">₹${rescuePrice}</b>
+            <span class="badge bg-danger-subtle text-danger ms-1" style="font-size: 0.68rem;">Save ${offer.discount_percent}%</span>
+          </div>
+          <div class="small text-muted">Quantity: <b>${offer.quantity_available}</b></div>
+        </div>
+      </div>
+      <div class="small text-muted mb-2">
+        <div><i class="fa-solid fa-location-dot text-danger me-1"></i> ${offer.collection_point}</div>
+        <div><i class="fa-regular fa-clock text-warning me-1"></i> Deadline: <b>${offer.time_remaining_str || '45 mins left'}</b></div>
+      </div>
+      <div class="d-flex gap-2">
+        <a href="/student/dashboard#food-rescue" class="btn btn-danger btn-sm rounded-pill flex-fill fw-bold">⚡ Buy Now</a>
+        <a href="/student/dashboard#food-rescue" class="btn btn-outline-secondary btn-sm rounded-pill flex-fill">View Details</a>
+      </div>
+    `;
+
+    alertCard.querySelector('.btn-close').addEventListener('click', () => {
+      alertCard.classList.replace('animate__bounceIn', 'animate__fadeOutRight');
+      setTimeout(() => alertCard.remove(), 400);
+    });
+
+    toastContainer.prepend(alertCard);
+
+    // Auto-dismiss after 12 seconds
+    setTimeout(() => {
+      if (alertCard.isConnected) {
+        alertCard.classList.replace('animate__bounceIn', 'animate__fadeOutRight');
+        setTimeout(() => alertCard.remove(), 400);
+      }
+    }, 12000);
+  }
+}
+
 // Global initialization
 document.addEventListener('DOMContentLoaded', () => {
   window.cartManager = new CartManager();
   window.cartManager.renderCartUI();
+  window.rescueNotifier = new FoodRescueNotifier();
 
-  // Notification Polling (every 30s)
-  setInterval(() => {
+  // Notification Polling (every 10s)
+  const pollNotifications = () => {
     fetch('/api/notifications/unread-count')
       .then(r => r.json())
       .then(data => {
@@ -203,5 +301,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       })
       .catch(() => {});
-  }, 30000);
+  };
+
+  pollNotifications();
+  setInterval(pollNotifications, 10000);
 });

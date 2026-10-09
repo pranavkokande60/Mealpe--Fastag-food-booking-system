@@ -32,12 +32,17 @@ def dashboard():
     prep_count = sum(1 for o in orders if o['order_status'] in ['ACCEPTED', 'PREPARING'])
     ready_count = sum(1 for o in orders if o['order_status'] == 'READY')
 
+    # Active rescue offers awaiting claims
+    from services.rescue_service import rescue_service
+    active_rescue_offers = rescue_service.get_active_offers()
+
     return render_template(
         'staff/dashboard.html',
         orders=orders,
         placed_count=placed_count,
         prep_count=prep_count,
         ready_count=ready_count,
+        active_rescue_offers=active_rescue_offers,
         now=datetime.datetime.now()
     )
 

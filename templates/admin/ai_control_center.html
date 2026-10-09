@@ -124,7 +124,7 @@
   </div>
 
   <!-- Food Waste Risk & Mitigation Advice -->
-  <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+  <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
       <div>
         <h5 class="fw-bold mb-0"><i class="fa-solid fa-recycle text-success me-2"></i> Food Spoilage & Waste Mitigation Engine</h5>
@@ -161,6 +161,64 @@
         <i class="fa-solid fa-check-circle me-2"></i> Zero high-risk food wastage detected for current stock rotation.
       </div>
     {% endif %}
+  </div>
+
+  <!-- Real-Time Smart Food Rescue Impact Dashboard -->
+  <div class="card border-0 shadow-sm rounded-4 p-4 bg-white" style="border-left: 6px solid #f97316 !important;">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+      <div>
+        <h5 class="fw-bold mb-0"><i class="fa-solid fa-bolt text-warning me-2"></i> Real-Time Food Rescue & Cancellation Impact</h5>
+        <small class="text-muted">Direct tracking of cancelled prepared meals converted into resold rescue deals</small>
+      </div>
+      <span class="badge bg-warning text-dark rounded-pill px-3 py-2 fw-bold">
+        <i class="fa-solid fa-leaf me-1"></i> {{ rescue_kpis.food_waste_saved_kg }} kg Waste Avoided
+      </span>
+    </div>
+
+    <div class="row g-3 text-center">
+      <div class="col-lg-2 col-md-4 col-6">
+        <div class="p-3 bg-light rounded-3 border">
+          <div class="text-muted small">Meals Resold</div>
+          <h4 class="fw-bold text-success mb-0">{{ rescue_kpis.total_meals_resold }}</h4>
+          <small class="text-muted">{{ rescue_kpis.total_offers_created }} listed</small>
+        </div>
+      </div>
+      <div class="col-lg-2 col-md-4 col-6">
+        <div class="p-3 bg-light rounded-3 border">
+          <div class="text-muted small">Waste Saved</div>
+          <h4 class="fw-bold text-success mb-0">{{ rescue_kpis.food_waste_saved_kg }} kg</h4>
+          <small class="text-muted">Landfill diverted</small>
+        </div>
+      </div>
+      <div class="col-lg-2 col-md-4 col-6">
+        <div class="p-3 bg-light rounded-3 border">
+          <div class="text-muted small">Valuation Saved</div>
+          <h4 class="fw-bold text-dark mb-0">₹{{ "%.2f"|format(rescue_kpis.food_waste_saved_valuation) }}</h4>
+          <small class="text-muted">Original cost</small>
+        </div>
+      </div>
+      <div class="col-lg-2 col-md-4 col-6">
+        <div class="p-3 bg-light rounded-3 border">
+          <div class="text-muted small">Rescue Resale Rev</div>
+          <h4 class="fw-bold text-primary mb-0">₹{{ "%.2f"|format(rescue_kpis.total_rescue_revenue) }}</h4>
+          <small class="text-muted">Resold @ 10% off</small>
+        </div>
+      </div>
+      <div class="col-lg-2 col-md-4 col-6">
+        <div class="p-3 bg-light rounded-3 border">
+          <div class="text-muted small">10% Cancel Fees</div>
+          <h4 class="fw-bold text-danger mb-0">₹{{ "%.2f"|format(rescue_kpis.total_cancellation_fees) }}</h4>
+          <small class="text-muted">Canteen retained</small>
+        </div>
+      </div>
+      <div class="col-lg-2 col-md-4 col-6">
+        <div class="p-3 bg-light rounded-3 border">
+          <div class="text-muted small">90% Refunds</div>
+          <h4 class="fw-bold text-info mb-0">₹{{ "%.2f"|format(rescue_kpis.total_refunds_issued) }}</h4>
+          <small class="text-muted">Credited to wallets</small>
+        </div>
+      </div>
+    </div>
   </div>
 
 </div>

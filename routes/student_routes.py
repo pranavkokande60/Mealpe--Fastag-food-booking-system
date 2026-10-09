@@ -50,6 +50,10 @@ def dashboard():
     
     # 6. Current Crowd Status
     crowd_status = crowd_predictor.get_current_crowd_status()
+
+    # 7. Active Smart Food Rescue Deals
+    from services.rescue_service import rescue_service
+    rescue_offers = rescue_service.get_active_offers()
     
     return render_template(
         'student/dashboard.html',
@@ -60,6 +64,7 @@ def dashboard():
         active_orders=active_orders,
         upcoming_seats=upcoming_seats,
         crowd_status=crowd_status,
+        rescue_offers=rescue_offers,
         now=datetime.datetime.now()
     )
 
@@ -216,7 +221,7 @@ def cancel_order(order_id):
         )
         if res.get('refund_amount', 0) > 0:
             session['wallet_balance'] = res['new_wallet_balance']
-            flash(f"Order #{res['order_number']} has been cancelled. ₹{res['refund_amount']:.2f} refunded to your dining wallet!", 'success')
+            flash(f"Order #{res['order_number']} has been cancelled. ₹{res['refund_amount']:.2f} (90% refund) credited back to your dining wallet!", 'success')
         else:
             flash(f"Order #{res['order_number']} has been cancelled successfully.", 'info')
     except Exception as e:
@@ -228,6 +233,24 @@ def cancel_order(order_id):
     elif redirect_to == 'history':
         return redirect(url_for('student.order_history'))
     return redirect(url_for('student.order_track', order_id=order_id))
+
+@student_bp.route('/rescue/buy/<int:offer_id>', methods=['POST'])
+@login_required
+def buy_rescue_offer(offer_id):
+    from services.rescue_service import rescue_service
+    user_id = session['user_id']
+    payment_method = request.form.get('payment_method', 'wallet')
+    try:
+        res = rescue_service.purchase_rescue_offer(offer_id, user_id, payment_method=payment_method)
+        if payment_method == 'wallet':
+            u = query_db("SELECT wallet_balance FROM users WHERE id = %s", (user_id,), one=True)
+            if u:
+                session['wallet_balance'] = float(u['wallet_balance'])
+        flash(f"🎉 Rescued Successfully! Order #{res['order_number']} created. Your Collection PIN is {res['collection_pin']}. Collect from Canteen Central Counter.", 'success')
+        return redirect(url_for('student.order_track', order_id=res['order_id']))
+    except Exception as e:
+        flash(str(e), 'danger')
+        return redirect(url_for('student.dashboard'))
 
 @student_bp.route('/receipt/<int:order_id>')
 @login_required

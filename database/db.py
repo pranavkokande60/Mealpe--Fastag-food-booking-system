@@ -86,6 +86,7 @@ def _try_postgres_connection():
                 dbname=Config.PG_DATABASE,
                 connect_timeout=3
             )
+            _migrate_database_schema(conn, 'postgres')
             return conn
         except Exception:
             pass
@@ -105,6 +106,7 @@ def _try_mysql_connection():
                 autocommit=False,
                 charset='utf8mb4'
             )
+            _migrate_database_schema(conn, 'mysql')
             return conn
         except Exception:
             pass
@@ -119,11 +121,90 @@ def _try_mysql_connection():
                 database=Config.MYSQL_DATABASE,
                 autocommit=False
             )
+            _migrate_database_schema(conn, 'mysql')
             return conn
         except Exception:
             pass
             
     return None
+
+def _migrate_database_schema(conn, backend):
+    """Ensures food_rescue_offers table and extended order columns exist automatically"""
+    try:
+        if backend == 'sqlite':
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS food_rescue_offers (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    original_order_id INTEGER NOT NULL,
+                    original_student_id INTEGER NOT NULL,
+                    food_id INTEGER NOT NULL,
+                    food_name TEXT,
+                    quantity_available INTEGER NOT NULL DEFAULT 1,
+                    quantity_claimed INTEGER NOT NULL DEFAULT 0,
+                    original_price REAL NOT NULL,
+                    rescue_price REAL NOT NULL,
+                    discount_percent INTEGER DEFAULT 10,
+                    offer_status TEXT DEFAULT 'AVAILABLE',
+                    collection_point TEXT DEFAULT 'College Canteen Central Counter',
+                    expires_at TEXT NOT NULL,
+                    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (original_order_id) REFERENCES orders(id) ON DELETE CASCADE,
+                    FOREIGN KEY (original_student_id) REFERENCES users(id) ON DELETE CASCADE,
+                    FOREIGN KEY (food_id) REFERENCES food_items(id) ON DELETE CASCADE
+                );
+            """)
+            cur = conn.cursor()
+            cur.execute("PRAGMA table_info(orders)")
+            existing_cols = {row[1] for row in cur.fetchall()}
+            columns_to_add = [
+                ("cancellation_fee", "REAL DEFAULT 0.00"),
+                ("refund_amount", "REAL DEFAULT 0.00"),
+                ("cancellation_reason", "TEXT"),
+                ("cancelled_at", "TEXT"),
+                ("is_rescue_order", "INTEGER DEFAULT 0"),
+                ("rescue_offer_id", "INTEGER"),
+                ("collection_pin", "TEXT")
+            ]
+            for col_name, col_def in columns_to_add:
+                if col_name not in existing_cols:
+                    try:
+                        conn.execute(f"ALTER TABLE orders ADD COLUMN {col_name} {col_def}")
+                    except Exception:
+                        pass
+            conn.commit()
+        elif backend == 'postgres':
+            cur = conn.cursor()
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS food_rescue_offers (
+                    id SERIAL PRIMARY KEY,
+                    original_order_id INT NOT NULL,
+                    original_student_id INT NOT NULL,
+                    food_id INT NOT NULL,
+                    food_name VARCHAR(120),
+                    quantity_available INT NOT NULL DEFAULT 1,
+                    quantity_claimed INT NOT NULL DEFAULT 0,
+                    original_price DECIMAL(10,2) NOT NULL,
+                    rescue_price DECIMAL(10,2) NOT NULL,
+                    discount_percent INT DEFAULT 10,
+                    offer_status VARCHAR(30) DEFAULT 'AVAILABLE',
+                    collection_point VARCHAR(120) DEFAULT 'College Canteen Central Counter',
+                    expires_at TIMESTAMP NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (original_order_id) REFERENCES orders(id) ON DELETE CASCADE,
+                    FOREIGN KEY (original_student_id) REFERENCES users(id) ON DELETE CASCADE,
+                    FOREIGN KEY (food_id) REFERENCES food_items(id) ON DELETE CASCADE
+                );
+                ALTER TABLE orders ADD COLUMN IF NOT EXISTS cancellation_fee DECIMAL(10,2) DEFAULT 0.00;
+                ALTER TABLE orders ADD COLUMN IF NOT EXISTS refund_amount DECIMAL(10,2) DEFAULT 0.00;
+                ALTER TABLE orders ADD COLUMN IF NOT EXISTS cancellation_reason TEXT;
+                ALTER TABLE orders ADD COLUMN IF NOT EXISTS cancelled_at TIMESTAMP;
+                ALTER TABLE orders ADD COLUMN IF NOT EXISTS is_rescue_order INT DEFAULT 0;
+                ALTER TABLE orders ADD COLUMN IF NOT EXISTS rescue_offer_id INT;
+                ALTER TABLE orders ADD COLUMN IF NOT EXISTS collection_pin VARCHAR(20);
+            """)
+            conn.commit()
+    except Exception:
+        pass
 
 def _get_sqlite_connection():
     """Connects to local SQLite database with DictRow factory"""
@@ -135,6 +216,7 @@ def _get_sqlite_connection():
     conn.create_function("greatest", -1, max)
     conn.create_function("LEAST", -1, min)
     conn.create_function("least", -1, min)
+    _migrate_database_schema(conn, 'sqlite')
     return conn
 
 def close_db(e=None):

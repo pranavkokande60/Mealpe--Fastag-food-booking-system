@@ -202,9 +202,15 @@ class OrderService:
 
     def cancel_order(self, order_id: int, user_id: int, role: str = 'student', reason: str = None) -> dict:
         """
-        Cancels an order if in PLACED or ACCEPTED status.
-        Restores food stock and refunds payment to the student's dining wallet if already paid.
+        Cancels an order in PLACED, ACCEPTED, PREPARING, or READY status (before completion).
+        - Applies 90% refund and 10% cancellation fee policy.
+        - Credits 90% refund to the student's dining wallet for paid orders.
+        - If cancelled before preparation (PLACED/ACCEPTED), restores raw food inventory.
+        - If cancelled during PREPARING/READY, preserves prepared food and automatically
+          creates a Food Rescue Offer to prevent food waste.
         """
+        from services.rescue_service import rescue_service
+
         order = query_db("SELECT * FROM orders WHERE id = %s", (order_id,), one=True)
         if not order:
             raise ValueError("Order not found.")
@@ -214,32 +220,49 @@ class OrderService:
             raise PermissionError("You are not authorized to cancel this order.")
 
         # Check cancellable status
-        if order['order_status'] in ['PREPARING', 'READY', 'COMPLETED']:
-            raise ValueError(f"Cannot cancel order. The kitchen has already started cooking (Status: {order['order_status']}).")
+        if order['order_status'] in ['COMPLETED']:
+            raise ValueError("Cannot cancel this order because it has already been completed and collected.")
 
         if order['order_status'] == 'CANCELLED':
             raise ValueError("This order has already been cancelled.")
 
-        # 1. Restore Food Stock & decrement total_orders
-        order_items = query_db("SELECT food_id, quantity FROM order_items WHERE order_id = %s", (order_id,)) or []
-        for item in order_items:
-            fid = item['food_id']
-            qty = item['quantity']
-            execute_db("""
-                UPDATE food_items 
-                SET stock_quantity = stock_quantity + %s,
-                    total_orders = CASE WHEN total_orders >= %s THEN total_orders - %s ELSE 0 END
-                WHERE id = %s
-            """, (qty, qty, qty, fid))
+        if order['order_status'] not in ['PLACED', 'ACCEPTED', 'PREPARING', 'READY']:
+            raise ValueError(f"Order in '{order['order_status']}' status cannot be cancelled.")
 
-        # 2. Process Refund
-        refund_amount = 0.0
+        # 1. Financial calculation (90% Refund + 10% Cancellation Fee)
         final_amount = float(order['final_amount'])
-        is_paid = order['payment_status'] == 'PAID'
+        is_paid = (order['payment_status'] == 'PAID')
 
         if is_paid:
-            refund_amount = final_amount
-            # Credit refund to student dining wallet
+            cancellation_fee = round(final_amount * 0.10, 2)
+            refund_amount = round(final_amount * 0.90, 2)
+        else:
+            cancellation_fee = 0.00
+            refund_amount = 0.00
+
+        # 2. Inventory vs. Food Rescue handling
+        is_cooking_or_ready = order['order_status'] in ['PREPARING', 'READY']
+        rescue_offers = []
+
+        if not is_cooking_or_ready:
+            # Cancelled before cooking started -> Restore raw food stock in inventory
+            order_items = query_db("SELECT food_id, quantity FROM order_items WHERE order_id = %s", (order_id,)) or []
+            for item in order_items:
+                fid = item['food_id']
+                qty = item['quantity']
+                execute_db("""
+                    UPDATE food_items 
+                    SET stock_quantity = stock_quantity + %s,
+                        total_orders = CASE WHEN total_orders >= %s THEN total_orders - %s ELSE 0 END
+                    WHERE id = %s
+                """, (qty, qty, qty, fid))
+        else:
+            # Cancelled while cooking or ready -> Automatically create Food Rescue Offer!
+            rescue_offers = rescue_service.create_rescue_offers_for_order(order_id, order['student_id'])
+
+        # 3. Process Refund & Update Database Records
+        if is_paid:
+            # Credit 90% refund to student dining wallet
             execute_db("""
                 UPDATE users 
                 SET wallet_balance = wallet_balance + %s 
@@ -248,9 +271,11 @@ class OrderService:
 
             execute_db("""
                 UPDATE orders 
-                SET order_status = 'CANCELLED', payment_status = 'REFUNDED', updated_at = NOW() 
+                SET order_status = 'CANCELLED', payment_status = 'REFUNDED',
+                    cancellation_fee = %s, refund_amount = %s, cancellation_reason = %s,
+                    cancelled_at = NOW(), updated_at = NOW() 
                 WHERE id = %s
-            """, (order_id,))
+            """, (cancellation_fee, refund_amount, reason, order_id))
 
             execute_db("""
                 UPDATE payments 
@@ -260,9 +285,11 @@ class OrderService:
         else:
             execute_db("""
                 UPDATE orders 
-                SET order_status = 'CANCELLED', payment_status = 'CANCELLED', updated_at = NOW() 
+                SET order_status = 'CANCELLED', payment_status = 'CANCELLED',
+                    cancellation_fee = 0.00, refund_amount = 0.00, cancellation_reason = %s,
+                    cancelled_at = NOW(), updated_at = NOW() 
                 WHERE id = %s
-            """, (order_id,))
+            """, (reason, order_id))
 
             execute_db("""
                 UPDATE payments 
@@ -274,9 +301,13 @@ class OrderService:
         updated_user = query_db("SELECT wallet_balance FROM users WHERE id = %s", (order['student_id'],), one=True)
         new_wallet_balance = float(updated_user['wallet_balance']) if updated_user else 0.0
 
-        # 3. Create Notification for Student
+        # 4. Create Notification for Student
         reason_text = f" Reason: {reason}." if reason else ""
-        refund_text = f" ₹{refund_amount:.2f} has been refunded to your dining wallet." if refund_amount > 0 else ""
+        if refund_amount > 0:
+            refund_text = f" ₹{refund_amount:.2f} (90% refund) credited to your dining wallet (₹{cancellation_fee:.2f} cancellation fee applied)."
+        else:
+            refund_text = ""
+
         notif_msg = f"Your order #{order['order_number']} has been cancelled.{reason_text}{refund_text}"
 
         execute_db("""
@@ -294,6 +325,8 @@ class OrderService:
             "order_id": order_id,
             "order_number": order['order_number'],
             "refund_amount": refund_amount,
+            "cancellation_fee": cancellation_fee,
+            "rescue_offers_created": len(rescue_offers),
             "new_wallet_balance": new_wallet_balance,
             "message": notif_msg
         }

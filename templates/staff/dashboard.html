@@ -36,7 +36,14 @@
           <div class="kds-card {{ o.order_status|lower }}">
             
             <div class="d-flex justify-content-between align-items-center mb-2">
-              <span class="fw-bold fs-5 text-dark">#{{ o.order_number }}</span>
+              <div>
+                <span class="fw-bold fs-5 text-dark">#{{ o.order_number }}</span>
+                {% if o.is_rescue_order %}
+                  <span class="badge bg-warning text-dark rounded-pill px-2 py-1 small fw-bold ms-1">
+                    ⚡ RESCUE MEAL
+                  </span>
+                {% endif %}
+              </div>
               <span class="badge {% if o.order_status == 'READY' %}bg-success{% elif o.order_status == 'PREPARING' %}bg-danger{% elif o.order_status == 'ACCEPTED' %}bg-warning text-dark{% else %}bg-primary{% endif %} rounded-pill px-3 py-1 text-uppercase">
                 {{ o.order_status }}
               </span>
@@ -46,6 +53,11 @@
               <i class="fa-regular fa-user me-1"></i> <b>{{ o.student_name }}</b> ({{ o.student_phone or 'No phone' }})
               <br>
               <i class="fa-regular fa-clock me-1"></i> Ordered at {{ o.created_at|date_format('%I:%M %p') }}
+              {% if o.is_rescue_order and o.collection_pin %}
+                <div class="bg-warning-subtle text-dark p-2 rounded-3 mt-2 border border-warning">
+                  <i class="fa-solid fa-key text-warning me-1"></i> Handover Collection PIN: <b class="fs-6 text-danger">{{ o.collection_pin }}</b>
+                </div>
+              {% endif %}
             </div>
 
             <!-- Items Deck -->
@@ -98,11 +110,32 @@
         </div>
       {% endfor %}
     </div>
-  {% else %}
-    <div class="text-center py-5 bg-white rounded-4 shadow-sm">
-      <i class="fa-solid fa-circle-check fa-3x text-success mb-3"></i>
-      <h4 class="fw-bold">All Orders Cleared!</h4>
-      <p class="text-muted small">The kitchen is all caught up. New student orders will automatically pop up here.</p>
+  <!-- Active Food Rescue Offers Monitoring Section -->
+  {% if active_rescue_offers %}
+    <div class="mt-5">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <span class="badge bg-danger rounded-pill px-3 py-1 fw-bold"><i class="fa-solid fa-bolt me-1"></i> Live Rescue Listings</span>
+          <h5 class="fw-bold mb-0 mt-1">Meals Listed on Food Rescue Counter</h5>
+        </div>
+      </div>
+      <div class="row g-3">
+        {% for ro in active_rescue_offers %}
+          <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+              <div class="d-flex align-items-center gap-3">
+                <img src="{{ ro.image_url }}" width="60" height="60" class="rounded-3" style="object-fit: cover;">
+                <div>
+                  <h6 class="fw-bold mb-1">{{ ro.food_name }}</h6>
+                  <div class="small text-muted">Original: ₹{{ "%.2f"|format(ro.original_price) }} • <b>Rescue: ₹{{ "%.2f"|format(ro.rescue_price) }}</b></div>
+                  <div class="badge bg-success-subtle text-success rounded-pill px-2 py-1 small">{{ ro.quantity_available }} portion available</div>
+                  <div class="small text-danger mt-1"><i class="fa-regular fa-clock me-1"></i> {{ ro.time_remaining_str }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
     </div>
   {% endif %}
 

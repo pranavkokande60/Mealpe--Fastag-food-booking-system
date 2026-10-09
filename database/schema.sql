@@ -61,10 +61,16 @@ CREATE TABLE IF NOT EXISTS orders (
     final_amount DECIMAL(10,2) NOT NULL,
     payment_method VARCHAR(30) NOT NULL,
     payment_status VARCHAR(30) NOT NULL DEFAULT 'PENDING',
-    order_status VARCHAR(30) NOT NULL DEFAULT 'PLACED',
     estimated_prep_time INT NOT NULL DEFAULT 15,
     pickup_time DATETIME NULL,
     special_instructions TEXT,
+    cancellation_fee DECIMAL(10,2) DEFAULT 0.00,
+    refund_amount DECIMAL(10,2) DEFAULT 0.00,
+    cancellation_reason TEXT,
+    cancelled_at DATETIME NULL,
+    is_rescue_order TINYINT(1) DEFAULT 0,
+    rescue_offer_id INT NULL,
+    collection_pin VARCHAR(20) NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE
@@ -195,9 +201,31 @@ CREATE TABLE IF NOT EXISTS ai_predictions (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 15. Food Rescue Offers Table (Anti-Waste Flash Deals)
+CREATE TABLE IF NOT EXISTS food_rescue_offers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    original_order_id INT NOT NULL,
+    original_student_id INT NOT NULL,
+    food_id INT NOT NULL,
+    food_name VARCHAR(120),
+    quantity_available INT NOT NULL DEFAULT 1,
+    quantity_claimed INT NOT NULL DEFAULT 0,
+    original_price DECIMAL(10,2) NOT NULL,
+    rescue_price DECIMAL(10,2) NOT NULL,
+    discount_percent INT DEFAULT 10,
+    offer_status VARCHAR(30) DEFAULT 'AVAILABLE',
+    collection_point VARCHAR(120) DEFAULT 'College Canteen Central Counter',
+    expires_at DATETIME NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (original_order_id) REFERENCES orders(id) ON DELETE CASCADE,
+    FOREIGN KEY (original_student_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (food_id) REFERENCES food_items(id) ON DELETE CASCADE
+);
+
 -- Indexes for lightning fast queries
 CREATE INDEX idx_orders_student ON orders(student_id);
 CREATE INDEX idx_orders_status ON orders(order_status);
 CREATE INDEX idx_food_category ON food_items(category_id);
 CREATE INDEX idx_seat_bookings_date_slot ON seat_bookings(booking_date, time_slot);
 CREATE INDEX idx_feedback_sentiment ON feedback(sentiment);
+CREATE INDEX idx_rescue_offers_status ON food_rescue_offers(offer_status);
